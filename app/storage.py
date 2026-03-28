@@ -46,13 +46,17 @@ def save_file(file: UploadFile, folder: str) -> str | None:
         )
         return result["secure_url"]
 
-    # Local fallback
-    filename = f"{uuid.uuid4()}{ext}"
-    dest = os.path.join(UPLOAD_DIR, folder, filename)
-    os.makedirs(os.path.dirname(dest), exist_ok=True)
-    with open(dest, "wb") as f:
-        f.write(content)
-    return f"uploads/{folder}/{filename}"
+    # Local fallback (not available on read-only filesystems like Vercel)
+    try:
+        filename = f"{uuid.uuid4()}{ext}"
+        dest = os.path.join(UPLOAD_DIR, folder, filename)
+        os.makedirs(os.path.dirname(dest), exist_ok=True)
+        with open(dest, "wb") as f:
+            f.write(content)
+        return f"uploads/{folder}/{filename}"
+    except OSError:
+        # Read-only filesystem (e.g. Vercel without Cloudinary configured)
+        return None
 
 
 def media_url(path: str) -> str:
