@@ -1,34 +1,15 @@
-import os
-import uuid
-
 from fastapi import APIRouter, Depends, Form, Request, UploadFile, File
 from fastapi.responses import RedirectResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 
 from app import models
-from app.config import UPLOAD_DIR, ALLOWED_EXTENSIONS, MAX_UPLOAD_SIZE
 from app.database import get_db
 from app.security import get_current_user, flash, get_flashes
+from app.storage import save_file
 
 router = APIRouter(prefix="/properties", tags=["properties"])
 templates = Jinja2Templates(directory="app/templates")
-
-
-def _save_image(file: UploadFile) -> str | None:
-    if not file or not file.filename:
-        return None
-    ext = os.path.splitext(file.filename)[1].lower()
-    if ext not in ALLOWED_EXTENSIONS:
-        return None
-    content = file.file.read()
-    if len(content) > MAX_UPLOAD_SIZE:
-        return None
-    filename = f"{uuid.uuid4()}{ext}"
-    dest = os.path.join(UPLOAD_DIR, "properties", filename)
-    with open(dest, "wb") as f:
-        f.write(content)
-    return f"uploads/properties/{filename}"
 
 
 @router.get("")
@@ -72,7 +53,7 @@ async def create_property(
     db: Session = Depends(get_db),
     user: models.User = Depends(get_current_user),
 ):
-    image_path = _save_image(image)
+    image_path = save_file(image, "properties")
     prop = models.Property(
         user_id=user.id,
         name=name.strip(),

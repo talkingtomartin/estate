@@ -12,7 +12,7 @@
   <a href="/properties/{{ prop.id }}" class="property-card">
     <div class="property-image">
       {% if prop.image_path %}
-      <img src="/static/{{ prop.image_path }}" alt="{{ prop.name }}" />
+      <img src="{{ media_url(prop.image_path) }}" alt="{{ prop.name }}" />
       {% else %}
       <div class="property-image-placeholder">🏠</div>
       {% endif %}

@@ -7,6 +7,7 @@ from starlette.middleware.sessions import SessionMiddleware
 
 from app.config import SECRET_KEY, UPLOAD_DIR
 from app.routers import auth, properties, transactions
+from app.storage import media_url
 
 app = FastAPI(title="EstateExpenses")
 
@@ -14,6 +15,7 @@ app.add_middleware(SessionMiddleware, secret_key=SECRET_KEY, max_age=86400 * 30)
 
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
 templates = Jinja2Templates(directory="app/templates")
+templates.env.globals["media_url"] = media_url
 
 
 app.include_router(auth.router)

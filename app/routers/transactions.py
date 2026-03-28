@@ -1,5 +1,3 @@
-import os
-import uuid
 from datetime import date
 
 from fastapi import APIRouter, Depends, Form, Request, UploadFile, File
@@ -8,9 +6,9 @@ from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 
 from app import models
-from app.config import UPLOAD_DIR, ALLOWED_EXTENSIONS, MAX_UPLOAD_SIZE
 from app.database import get_db
 from app.security import get_current_user, flash, get_flashes
+from app.storage import save_file
 
 router = APIRouter(tags=["transactions"])
 templates = Jinja2Templates(directory="app/templates")
@@ -38,19 +36,10 @@ EXPENSE_CATEGORIES = [
 
 
 def _save_attachment(file: UploadFile) -> tuple[str, str] | tuple[None, None]:
-    if not file or not file.filename:
+    path = save_file(file, "transactions")
+    if not path:
         return None, None
-    ext = os.path.splitext(file.filename)[1].lower()
-    if ext not in ALLOWED_EXTENSIONS:
-        return None, None
-    content = file.file.read()
-    if len(content) > MAX_UPLOAD_SIZE:
-        return None, None
-    safe_name = f"{uuid.uuid4()}{ext}"
-    dest = os.path.join(UPLOAD_DIR, "transactions", safe_name)
-    with open(dest, "wb") as f:
-        f.write(content)
-    return f"uploads/transactions/{safe_name}", file.filename
+    return path, file.filename
 
 
 def _get_property(db: Session, property_id: int, user_id: int) -> models.Property | None:
