@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+{% block title %}Alle transaksjoner – Yields{% endblock %}
+{% block content %}
+
+<div class="page-header">
+  <h1>Alle transaksjoner</h1>
+</div>
+
+<!-- Period picker -->
+<div class="period-picker">
+  {% for key, label in periods.items() %}
+  <a href="/transactions/all?period={{ key }}"
+     class="period-btn {% if period == key %}period-btn-active{% endif %}">{{ label }}</a>
+  {% endfor %}
+
+  <!-- Custom range -->
+  <form method="get" action="/transactions/all" class="period-custom-form">
+    <input type="hidden" name="period" value="custom" />
+    <input type="date" name="from_date" value="{{ from_date if period == 'custom' else '' }}" required />
+    <span>–</span>
+    <input type="date" name="to_date" value="{{ to_date if period == 'custom' else '' }}" required />
+    <button type="submit" class="btn btn-outline-sm">Vis</button>
+  </form>
+</div>
+
+<p class="period-range-label">
+  {{ period_start.strftime("%d.%m.%Y") }} – {{ period_end.strftime("%d.%m.%Y") }}
+</p>
+
+<!-- Summary -->
+<div class="summary-grid">
+  <div class="summary-card summary-income">
+    <span class="summary-label">Inntekter</span>
+    <span class="summary-amount">{{ "{:,.0f}".format(total_income).replace(",", " ") }} kr</span>
+  </div>
+  <div class="summary-card summary-expense">
+    <span class="summary-label">Utgifter</span>
+    <span class="summary-amount">{{ "{:,.0f}".format(total_expenses).replace(",", " ") }} kr</span>
+  </div>
+  <div class="summary-card {% if net >= 0 %}summary-income{% else %}summary-expense{% endif %}">
+    <span class="summary-label">Resultat</span>
+    <span class="summary-amount">{{ "{:,.0f}".format(net).replace(",", " ") }} kr</span>
+  </div>
+</div>
+
+<!-- Transaction list -->
+{% if transactions %}
+<div class="txn-list" style="margin-top:1.5rem">
+  {% for t in transactions %}
+  <div class="txn-item">
+    <div class="txn-main">
+      <div class="txn-desc">
+        {{ t.description }}
+        {% if t.is_recurring %}<span class="badge badge-recurring">Månedlig</span>{% endif %}
+        {% if t.category %}<span class="badge badge-category">{{ t.category }}</span>{% endif %}
+      </div>
+      <div class="txn-meta">
+        {{ t.date.strftime("%d.%m.%Y") }} ·
+        <a href="/properties/{{ t.property_id }}">{{ t.property.name }}</a>
+      </div>
+    </div>
+    <div class="txn-right">
+      {% if t.type == "income" %}
+      <span class="txn-amount income-amount">+ {{ "{:,.0f}".format(t.amount).replace(",", " ") }} kr</span>
+      {% else %}
+      <span class="txn-amount expense-amount">- {{ "{:,.0f}".format(t.amount).replace(",", " ") }} kr</span>
+      {% endif %}
+      <div class="txn-actions">
+        {% if t.attachments %}
+        <a href="/transactions/{{ t.id }}/edit" class="btn btn-icon" title="Vedlegg">📎</a>
+        {% endif %}
+        <a href="/transactions/{{ t.id }}/edit" class="btn btn-icon" title="Rediger">✏️</a>
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% else %}
+<div class="empty-state" style="margin-top:2rem">
+  <div class="empty-icon">📋</div>
+  <h2>Ingen transaksjoner</h2>
+  <p>Det er ingen transaksjoner i valgt periode.</p>
+</div>
+{% endif %}
+
+{% endblock %}

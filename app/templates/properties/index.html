@@ -38,4 +38,35 @@
 </div>
 {% endif %}
 
+{% if recent_transactions %}
+<div class="recent-txn-header">
+  <h2>Siste transaksjoner</h2>
+  <a href="/transactions/all" class="btn btn-outline-sm">Se alle</a>
+</div>
+<div class="txn-list">
+  {% for t in recent_transactions %}
+  <div class="txn-item">
+    <div class="txn-main">
+      <div class="txn-desc">
+        {{ t.description }}
+        {% if t.is_recurring %}<span class="badge badge-recurring">Månedlig</span>{% endif %}
+        {% if t.category %}<span class="badge badge-category">{{ t.category }}</span>{% endif %}
+      </div>
+      <div class="txn-meta">{{ t.date.strftime("%d.%m.%Y") }} · <a href="/properties/{{ t.property_id }}">{{ t.property.name }}</a></div>
+    </div>
+    <div class="txn-right">
+      {% if t.type == "income" %}
+      <span class="txn-amount income-amount">+ {{ "{:,.0f}".format(t.amount).replace(",", " ") }} kr</span>
+      {% else %}
+      <span class="txn-amount expense-amount">- {{ "{:,.0f}".format(t.amount).replace(",", " ") }} kr</span>
+      {% endif %}
+      <div class="txn-actions">
+        <a href="/transactions/{{ t.id }}/edit" class="btn btn-icon" title="Rediger">✏️</a>
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
+
 {% endblock %}

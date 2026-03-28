@@ -57,9 +57,19 @@ async def list_properties(
         .all()
     )
 
+    recent_transactions = (
+        db.query(models.Transaction)
+        .join(models.Property)
+        .filter(models.Property.user_id.in_(owner_ids))
+        .order_by(models.Transaction.date.desc(), models.Transaction.id.desc())
+        .limit(10)
+        .all()
+    )
+
     return templates.TemplateResponse(request, "properties/index.html", {
         "user": user,
         "properties": properties,
+        "recent_transactions": recent_transactions,
         "flash_messages": get_flashes(request),
     })
 

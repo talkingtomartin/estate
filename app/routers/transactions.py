@@ -1,14 +1,16 @@
-from datetime import date
+import calendar
+from datetime import date, timedelta
 
 from fastapi import APIRouter, Depends, Form, Request, UploadFile, File
 from fastapi.responses import RedirectResponse
-from app.templates_config import templates
+from sqlalchemy import or_, and_
 from sqlalchemy.orm import Session
 
 from app import models
 from app.database import get_db
 from app.security import get_current_user, flash, get_flashes
 from app.storage import save_file
+from app.templates_config import templates
 
 router = APIRouter(tags=["transactions"])
 
@@ -45,6 +47,90 @@ def _get_property(db: Session, property_id: int, user_id: int) -> models.Propert
     """Return property if user is owner or account-level collaborator."""
     from app.routers.properties import _can_access_property
     return _can_access_property(db, property_id, user_id)
+
+
+# ── All transactions overview ────────────────────────────────────────────────
+
+PERIODS = {
+    "last_month": "Forrige måned",
+    "this_month":  "Denne måneden",
+    "last_30":    "Siste 30 dager",
+    "last_90":    "Siste 90 dager",
+    "ytd":        "År til dato",
+    "this_year":  "I år",
+}
+
+
+def _period_range(period: str, from_date: str | None, to_date: str | None) -> tuple[date, date]:
+    today = date.today()
+    if period == "custom" and from_date and to_date:
+        return date.fromisoformat(from_date), date.fromisoformat(to_date)
+    if period == "this_month":
+        return date(today.year, today.month, 1), today
+    if period == "last_30":
+        return today - timedelta(days=29), today
+    if period == "last_90":
+        return today - timedelta(days=89), today
+    if period in ("ytd", "this_year"):
+        return date(today.year, 1, 1), today
+    # default: last_month
+    first_of_this = date(today.year, today.month, 1)
+    last_day_prev = first_of_this - timedelta(days=1)
+    return date(last_day_prev.year, last_day_prev.month, 1), last_day_prev
+
+
+@router.get("/transactions/all")
+async def all_transactions(
+    request: Request,
+    period: str = "last_month",
+    from_date: str = None,
+    to_date: str = None,
+    db: Session = Depends(get_db),
+    user: models.User = Depends(get_current_user),
+):
+    from app.routers.properties import _accessible_owner_ids
+    owner_ids = _accessible_owner_ids(db, user.id)
+
+    start, end = _period_range(period, from_date, to_date)
+
+    transactions = (
+        db.query(models.Transaction)
+        .join(models.Property)
+        .filter(
+            models.Property.user_id.in_(owner_ids),
+            or_(
+                and_(
+                    models.Transaction.is_recurring == False,
+                    models.Transaction.date >= start,
+                    models.Transaction.date <= end,
+                ),
+                and_(
+                    models.Transaction.is_recurring == True,
+                    models.Transaction.date <= end,
+                ),
+            ),
+        )
+        .order_by(models.Transaction.date.desc(), models.Transaction.id.desc())
+        .all()
+    )
+
+    total_income = sum(t.amount for t in transactions if t.type == "income")
+    total_expenses = sum(t.amount for t in transactions if t.type == "expense")
+
+    return templates.TemplateResponse(request, "transactions/all.html", {
+        "user": user,
+        "transactions": transactions,
+        "total_income": total_income,
+        "total_expenses": total_expenses,
+        "net": total_income - total_expenses,
+        "period": period,
+        "from_date": from_date or start.isoformat(),
+        "to_date": to_date or end.isoformat(),
+        "period_start": start,
+        "period_end": end,
+        "periods": PERIODS,
+        "flash_messages": get_flashes(request),
+    })
 
 
 # ── New transaction ──────────────────────────────────────────────────────────

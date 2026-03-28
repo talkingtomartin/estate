@@ -615,6 +615,77 @@ textarea { resize: vertical; }
 
 .property-shared { font-size: 0.78rem; color: #2b6cb0; margin-top: 0.2rem; }
 
+/* ── Recent transactions (homepage) ────────────────────────────────────── */
+.recent-txn-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 2rem 0 0.75rem;
+}
+
+.recent-txn-header h2 {
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+/* ── All transactions – period picker ───────────────────────────────────── */
+.period-picker {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.period-btn {
+  padding: 0.35rem 0.85rem;
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  text-decoration: none;
+  background: var(--surface);
+  transition: border-color 0.15s, color 0.15s, background 0.15s;
+  white-space: nowrap;
+}
+
+.period-btn:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.period-btn-active {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: #fff;
+}
+
+.period-btn-active:hover {
+  color: #fff;
+}
+
+.period-custom-form {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  flex-wrap: wrap;
+}
+
+.period-custom-form input[type="date"] {
+  padding: 0.3rem 0.5rem;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-size: 0.82rem;
+  background: var(--surface);
+  color: var(--text);
+}
+
+.period-range-label {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  margin-bottom: 1.25rem;
+}
+
 /* ── Profile page ───────────────────────────────────────────────────────── */
 .profile-grid {
   display: grid;
