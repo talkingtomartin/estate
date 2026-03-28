@@ -132,14 +132,18 @@ document.addEventListener('DOMContentLoaded', function () {
         reader.onload = (e) => { img.src = e.target.result; };
         reader.readAsDataURL(file);
         preview.appendChild(img);
-
-        parseReceipt(file, preview);
       }
 
       const nameEl = document.createElement('span');
       nameEl.className = 'attach-preview-name';
       nameEl.textContent = file.name;
       preview.appendChild(nameEl);
+
+      // Call AI for both images and PDFs
+      const isPdf = file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf');
+      if (file.type.startsWith('image/') || isPdf) {
+        parseReceipt(file, preview);
+      }
     });
   });
 });

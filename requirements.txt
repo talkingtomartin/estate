@@ -13,3 +13,4 @@ itsdangerous>=2.2.0
 aiofiles>=24.1.0
 cloudinary>=1.40.0
 openai>=1.30.0
+pypdf>=4.0.0

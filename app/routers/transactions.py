@@ -39,9 +39,32 @@ EXPENSE_CATEGORIES = [
 ]
 
 
-# ── Receipt AI parsing (OpenAI GPT-4o vision) ────────────────────────────────
+# ── Receipt AI parsing (OpenAI GPT-4o vision + PDF text extraction) ──────────
 
 SUPPORTED_IMAGE_TYPES = {"image/jpeg", "image/png", "image/gif", "image/webp"}
+EXTRACT_PROMPT = (
+    "This is a receipt. Extract and return ONLY valid JSON, no extra text:\n"
+    '{"amount": <final total as number, no currency symbol>, '
+    '"date": "<YYYY-MM-DD>", '
+    '"description": "<merchant name or brief item description, max 50 chars>"}\n'
+    "Use null for any value you cannot find. "
+    "Parse Norwegian date formats if needed."
+)
+
+
+def _parse_with_openai(client, content: list) -> dict:
+    response = client.chat.completions.create(
+        model="gpt-4o-mini",
+        max_tokens=256,
+        messages=[{"role": "user", "content": content}],
+    )
+    text = response.choices[0].message.content.strip()
+    if text.startswith("```"):
+        text = text.split("```")[1]
+        if text.startswith("json"):
+            text = text[4:]
+    return json.loads(text)
+
 
 @router.post("/transactions/parse-receipt")
 async def parse_receipt(
@@ -53,56 +76,42 @@ async def parse_receipt(
         return JSONResponse({"error": "AI ikke konfigurert"}, status_code=503)
 
     media_type = file.content_type or ""
-    if media_type not in SUPPORTED_IMAGE_TYPES:
-        return JSONResponse({"error": "Kun bildefiler støttes (JPEG, PNG, WEBP)"}, status_code=400)
+    is_image = media_type in SUPPORTED_IMAGE_TYPES
+    is_pdf = media_type == "application/pdf" or file.filename.lower().endswith(".pdf")
+
+    if not is_image and not is_pdf:
+        return JSONResponse({"error": "Kun bilder (JPEG, PNG, WEBP) og PDF støttes"}, status_code=400)
 
     data = await file.read()
-    if len(data) > 5 * 1024 * 1024:
-        return JSONResponse({"error": "Filen er for stor (maks 5 MB)"}, status_code=400)
+    if len(data) > 10 * 1024 * 1024:
+        return JSONResponse({"error": "Filen er for stor (maks 10 MB)"}, status_code=400)
 
     from openai import OpenAI
     client = OpenAI(api_key=OPENAI_API_KEY)
 
     try:
-        b64 = base64.standard_b64encode(data).decode("utf-8")
-        response = client.chat.completions.create(
-            model="gpt-4o-mini",
-            max_tokens=256,
-            messages=[{
-                "role": "user",
-                "content": [
-                    {
-                        "type": "image_url",
-                        "image_url": {
-                            "url": f"data:{media_type};base64,{b64}",
-                            "detail": "low",
-                        },
-                    },
-                    {
-                        "type": "text",
-                        "text": (
-                            "This is a receipt. Extract and return ONLY valid JSON, no extra text:\n"
-                            '{"amount": <final total as number, no currency>, '
-                            '"date": "<YYYY-MM-DD>", '
-                            '"description": "<merchant name or brief item description, max 50 chars>"}\n'
-                            "Use null for any value you cannot find. "
-                            "Parse Norwegian date formats if needed."
-                        ),
-                    },
-                ],
-            }],
-        )
+        if is_pdf:
+            import io
+            from pypdf import PdfReader
+            reader = PdfReader(io.BytesIO(data))
+            pdf_text = "\n".join(page.extract_text() or "" for page in reader.pages).strip()
+            if not pdf_text:
+                return JSONResponse({"error": "Kunne ikke lese tekst fra PDF-en"}, status_code=422)
+            content = [
+                {"type": "text", "text": f"Receipt text extracted from PDF:\n\n{pdf_text}\n\n{EXTRACT_PROMPT}"},
+            ]
+        else:
+            b64 = base64.standard_b64encode(data).decode("utf-8")
+            content = [
+                {"type": "image_url", "image_url": {"url": f"data:{media_type};base64,{b64}", "detail": "low"}},
+                {"type": "text", "text": EXTRACT_PROMPT},
+            ]
 
-        text = response.choices[0].message.content.strip()
-        if text.startswith("```"):
-            text = text.split("```")[1]
-            if text.startswith("json"):
-                text = text[4:]
-        result = json.loads(text)
+        result = _parse_with_openai(client, content)
         return JSONResponse(result)
 
     except (json.JSONDecodeError, IndexError):
-        return JSONResponse({"error": "Kunne ikke lese kvitteringen"}, status_code=422)
+        return JSONResponse({"error": "Kunne ikke tolke svaret fra AI"}, status_code=422)
     except Exception:
         return JSONResponse({"error": "Noe gikk galt"}, status_code=500)
 
