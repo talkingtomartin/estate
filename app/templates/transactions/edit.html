@@ -83,7 +83,7 @@
       <div class="attachment-list">
         {% for att in txn.attachments %}
         <div class="attachment-item">
-          <a href="{{ media_url(att.file_path) }}" target="_blank" class="attachment-link">📎 {{ att.filename }}</a>
+          <a href="{{ att.file_path | media_url }}" target="_blank" class="attachment-link">📎 {{ att.filename }}</a>
           <form method="post" action="/attachments/{{ att.id }}/delete"
                 onsubmit="return confirm('Slett vedlegget «{{ att.filename }}»?')" style="display:inline">
             <button type="submit" class="btn btn-icon btn-danger-icon" title="Slett">✕</button>

@@ -18,7 +18,7 @@ app.add_middleware(SessionMiddleware, secret_key=SECRET_KEY, max_age=86400 * 30)
 
 app.mount("/static", StaticFiles(directory=os.path.join(BASE_DIR, "app", "static")), name="static")
 templates = Jinja2Templates(directory=os.path.join(BASE_DIR, "app", "templates"))
-templates.env.globals["media_url"] = media_url
+templates.env.filters["media_url"] = media_url
 
 
 app.include_router(auth.router)

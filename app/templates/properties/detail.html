@@ -13,7 +13,7 @@
 <!-- Property header -->
 <div class="property-header">
   {% if prop.image_path %}
-  <img src="{{ media_url(prop.image_path) }}" alt="{{ prop.name }}" class="property-hero-img" />
+  <img src="{{ prop.image_path | media_url }}" alt="{{ prop.name }}" class="property-hero-img" />
   {% endif %}
   <div class="property-header-info">
     <h1>{{ prop.name }}</h1>
