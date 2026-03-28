@@ -22,6 +22,9 @@
       {% if prop.address %}
       <p class="property-address">📍 {{ prop.address }}</p>
       {% endif %}
+      {% if prop.id in shared_ids %}
+      <p class="property-shared">👥 Delt med deg</p>
+      {% endif %}
     </div>
   </a>
   {% endfor %}

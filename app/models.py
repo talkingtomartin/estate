@@ -1,7 +1,7 @@
 from datetime import datetime
 from sqlalchemy import (
     Column, Integer, String, Float, Boolean, Date, DateTime,
-    ForeignKey, Text
+    ForeignKey, Text, UniqueConstraint
 )
 from sqlalchemy.orm import relationship
 from app.database import Base
@@ -32,6 +32,22 @@ class Property(Base):
 
     user = relationship("User", back_populates="properties")
     transactions = relationship("Transaction", back_populates="property", cascade="all, delete-orphan")
+    members = relationship("PropertyMember", back_populates="property", cascade="all, delete-orphan")
+
+
+class PropertyMember(Base):
+    __tablename__ = "property_members"
+    __table_args__ = (UniqueConstraint("property_id", "user_id"),)
+
+    id = Column(Integer, primary_key=True, index=True)
+    property_id = Column(Integer, ForeignKey("properties.id"), nullable=False)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    invited_by_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    property = relationship("Property", back_populates="members")
+    user = relationship("User", foreign_keys=[user_id])
+    invited_by = relationship("User", foreign_keys=[invited_by_id])
 
 
 class Transaction(Base):

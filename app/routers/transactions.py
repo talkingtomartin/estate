@@ -42,10 +42,17 @@ def _save_attachment(file: UploadFile) -> tuple[str, str] | tuple[None, None]:
 
 
 def _get_property(db: Session, property_id: int, user_id: int) -> models.Property | None:
-    return db.query(models.Property).filter(
-        models.Property.id == property_id,
-        models.Property.user_id == user_id,
+    """Return property if user is owner or member."""
+    prop = db.query(models.Property).filter(models.Property.id == property_id).first()
+    if not prop:
+        return None
+    if prop.user_id == user_id:
+        return prop
+    member = db.query(models.PropertyMember).filter(
+        models.PropertyMember.property_id == property_id,
+        models.PropertyMember.user_id == user_id,
     ).first()
+    return prop if member else None
 
 
 # ── New transaction ──────────────────────────────────────────────────────────
