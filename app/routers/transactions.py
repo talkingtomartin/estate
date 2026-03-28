@@ -62,8 +62,7 @@ async def new_transaction_page(
     if not prop:
         return RedirectResponse(url="/properties", status_code=302)
 
-    return templates.TemplateResponse("transactions/new.html", {
-        "request": request,
+    return templates.TemplateResponse(request, "transactions/new.html", {
         "user": user,
         "prop": prop,
         "default_type": type,
@@ -138,8 +137,7 @@ async def edit_transaction_page(
     if not txn:
         return RedirectResponse(url="/properties", status_code=302)
 
-    return templates.TemplateResponse("transactions/edit.html", {
-        "request": request,
+    return templates.TemplateResponse(request, "transactions/edit.html", {
         "user": user,
         "txn": txn,
         "prop": txn.property,

@@ -27,8 +27,7 @@ async def login_page(request: Request):
     token = request.cookies.get("access_token")
     if token:
         return RedirectResponse(url="/properties", status_code=302)
-    return templates.TemplateResponse("auth/login.html", {
-        "request": request,
+    return templates.TemplateResponse(request, "auth/login.html", {
         "flash_messages": get_flashes(request),
         "google_enabled": bool(GOOGLE_CLIENT_ID),
     })
@@ -54,8 +53,7 @@ async def login(
 
 @router.get("/register")
 async def register_page(request: Request):
-    return templates.TemplateResponse("auth/register.html", {
-        "request": request,
+    return templates.TemplateResponse(request, "auth/register.html", {
         "flash_messages": get_flashes(request),
     })
 

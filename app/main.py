@@ -46,8 +46,9 @@ async def http_exception_handler(request: Request, exc: HTTPException):
     if exc.status_code == 401:
         return RedirectResponse(url="/auth/login", status_code=302)
     return templates.TemplateResponse(
+        request,
         "error.html",
-        {"request": request, "status_code": exc.status_code, "detail": exc.detail},
+        {"status_code": exc.status_code, "detail": exc.detail},
         status_code=exc.status_code,
     )
 

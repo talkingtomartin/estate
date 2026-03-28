@@ -23,8 +23,7 @@ async def list_properties(
         .order_by(models.Property.created_at.desc())
         .all()
     )
-    return templates.TemplateResponse("properties/index.html", {
-        "request": request,
+    return templates.TemplateResponse(request, "properties/index.html", {
         "user": user,
         "properties": properties,
         "flash_messages": get_flashes(request),
@@ -36,8 +35,7 @@ async def new_property_page(
     request: Request,
     user: models.User = Depends(get_current_user),
 ):
-    return templates.TemplateResponse("properties/new.html", {
-        "request": request,
+    return templates.TemplateResponse(request, "properties/new.html", {
         "user": user,
         "flash_messages": get_flashes(request),
     })
@@ -124,8 +122,7 @@ async def property_detail(
     prev_month_date = month_start - timedelta(days=1)
     next_month_date = month_end + timedelta(days=1)
 
-    return templates.TemplateResponse("properties/detail.html", {
-        "request": request,
+    return templates.TemplateResponse(request, "properties/detail.html", {
         "user": user,
         "prop": prop,
         "transactions": transactions,
