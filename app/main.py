@@ -9,12 +9,15 @@ from app.config import SECRET_KEY, UPLOAD_DIR
 from app.routers import auth, properties, transactions
 from app.storage import media_url
 
+# Absolute path to project root (works both locally and on Vercel)
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
 app = FastAPI(title="EstateExpenses")
 
 app.add_middleware(SessionMiddleware, secret_key=SECRET_KEY, max_age=86400 * 30)
 
-app.mount("/static", StaticFiles(directory="app/static"), name="static")
-templates = Jinja2Templates(directory="app/templates")
+app.mount("/static", StaticFiles(directory=os.path.join(BASE_DIR, "app", "static")), name="static")
+templates = Jinja2Templates(directory=os.path.join(BASE_DIR, "app", "templates"))
 templates.env.globals["media_url"] = media_url
 
 
@@ -25,8 +28,12 @@ app.include_router(transactions.router)
 
 @app.on_event("startup")
 async def startup_event():
-    os.makedirs(os.path.join(UPLOAD_DIR, "properties"), exist_ok=True)
-    os.makedirs(os.path.join(UPLOAD_DIR, "transactions"), exist_ok=True)
+    # Only create local upload dirs when not using Cloudinary (Vercel filesystem is read-only)
+    try:
+        os.makedirs(os.path.join(UPLOAD_DIR, "properties"), exist_ok=True)
+        os.makedirs(os.path.join(UPLOAD_DIR, "transactions"), exist_ok=True)
+    except OSError:
+        pass
 
 
 @app.exception_handler(HTTPException)
