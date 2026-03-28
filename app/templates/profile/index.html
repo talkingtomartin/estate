@@ -1,0 +1,98 @@
+{% extends "base.html" %}
+{% block title %}Min side – Yields{% endblock %}
+{% block content %}
+<div class="page-header">
+  <h1>{{ user.name or user.email }}</h1>
+</div>
+
+<div class="profile-grid">
+
+  <!-- Brukerinformasjon -->
+  <section class="card">
+    <h2 class="card-title">Brukerinformasjon</h2>
+    <dl class="info-list">
+      <dt>Navn</dt>
+      <dd>{{ user.name or "–" }}</dd>
+      <dt>E-post</dt>
+      <dd>{{ user.email }}</dd>
+      <dt>Registrert</dt>
+      <dd>{{ user.created_at.strftime("%d. %B %Y") if user.created_at else "–" }}</dd>
+      <dt>Innloggingsmetode</dt>
+      <dd>{% if user.google_id %}Google{% else %}E-post og passord{% endif %}</dd>
+    </dl>
+  </section>
+
+  <!-- Endre passord -->
+  {% if not user.google_id %}
+  <section class="card">
+    <h2 class="card-title">Endre passord</h2>
+    <form method="post" action="/profile/change-password" class="form">
+      <div class="form-group">
+        <label for="current_password">Nåværende passord</label>
+        <input type="password" id="current_password" name="current_password" required
+               autocomplete="current-password" placeholder="••••••••" />
+      </div>
+      <div class="form-group">
+        <label for="new_password">Nytt passord</label>
+        <input type="password" id="new_password" name="new_password" required
+               autocomplete="new-password" placeholder="Minst 8 tegn" />
+      </div>
+      <div class="form-group">
+        <label for="confirm_password">Bekreft nytt passord</label>
+        <input type="password" id="confirm_password" name="confirm_password" required
+               autocomplete="new-password" placeholder="••••••••" />
+      </div>
+      <button type="submit" class="btn btn-primary">Lagre nytt passord</button>
+    </form>
+  </section>
+  {% endif %}
+
+  <!-- Samarbeidspartnere -->
+  <section class="card card-full">
+    <h2 class="card-title">👥 Samarbeidspartnere</h2>
+
+    {% if my_collaborators %}
+    <p class="collab-label">Disse har tilgang til alle dine eiendommer:</p>
+    <div class="collab-list">
+      {% for c in my_collaborators %}
+      <div class="collab-item">
+        <span class="collab-name">{{ c.user.name or c.user.email }}</span>
+        <span class="collab-email">{{ c.user.email }}</span>
+        <form method="post" action="/properties/team/{{ c.id }}/remove"
+              onsubmit="return confirm('Fjerne tilgangen til {{ c.user.name or c.user.email }}?')"
+              style="margin-left:auto">
+          <button type="submit" class="btn btn-icon btn-danger-icon" title="Fjern tilgang">✕</button>
+        </form>
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+
+    <form method="post" action="/properties/team/invite" class="collab-invite-form" style="margin-top:1rem">
+      <input type="email" name="email" placeholder="Inviter via e-postadresse..." required />
+      <button type="submit" class="btn btn-primary">Inviter</button>
+    </form>
+    <p class="collab-hint">Personen må være registrert i Yields. De vil se alle dine eiendommer.</p>
+
+    {% if my_memberships %}
+    <div style="margin-top:1.25rem;padding-top:1rem;border-top:1px solid var(--border)">
+      <p class="collab-label">Du har tilgang til disse kontoene:</p>
+      <div class="collab-list">
+        {% for c in my_memberships %}
+        <div class="collab-item">
+          <span class="collab-name">{{ c.owner.name or c.owner.email }}</span>
+          <span class="collab-email">{{ c.owner.email }}</span>
+          <form method="post" action="/properties/team/{{ c.id }}/leave"
+                onsubmit="return confirm('Forlate {{ c.owner.name or c.owner.email }} sin konto?')"
+                style="margin-left:auto">
+            <button type="submit" class="btn btn-danger-sm">Forlat</button>
+          </form>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+  </section>
+
+</div>
+{% endblock %}

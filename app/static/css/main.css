@@ -615,6 +615,51 @@ textarea { resize: vertical; }
 
 .property-shared { font-size: 0.78rem; color: #2b6cb0; margin-top: 0.2rem; }
 
+/* ── Profile page ───────────────────────────────────────────────────────── */
+.profile-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 1.5rem;
+  align-items: start;
+}
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 1.5rem;
+}
+
+.card-full {
+  grid-column: 1 / -1;
+}
+
+.card-title {
+  font-size: 1rem;
+  font-weight: 600;
+  margin-bottom: 1.25rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.info-list {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.6rem 1.5rem;
+  font-size: 0.875rem;
+}
+
+.info-list dt {
+  color: var(--text-muted);
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.info-list dd {
+  margin: 0;
+  color: var(--text);
+}
+
 /* ── Responsive ─────────────────────────────────────────────────────────── */
 @media (max-width: 640px) {
   .navbar { padding: 0 1rem; }

@@ -57,24 +57,9 @@ async def list_properties(
         .all()
     )
 
-    # Collaborators I've invited
-    my_collaborators = (
-        db.query(models.Collaborator)
-        .filter(models.Collaborator.owner_id == user.id)
-        .all()
-    )
-    # Accounts I collaborate on
-    my_memberships = (
-        db.query(models.Collaborator)
-        .filter(models.Collaborator.user_id == user.id)
-        .all()
-    )
-
     return templates.TemplateResponse(request, "properties/index.html", {
         "user": user,
         "properties": properties,
-        "my_collaborators": my_collaborators,
-        "my_memberships": my_memberships,
         "flash_messages": get_flashes(request),
     })
 
@@ -214,11 +199,11 @@ async def invite_collaborator(
     invitee = db.query(models.User).filter(models.User.email == email.lower()).first()
     if not invitee:
         flash(request, f'Ingen bruker med e-post «{email}» er registrert.', "error")
-        return RedirectResponse(url="/properties", status_code=302)
+        return RedirectResponse(url="/profile", status_code=302)
 
     if invitee.id == user.id:
         flash(request, "Du kan ikke invitere deg selv.", "error")
-        return RedirectResponse(url="/properties", status_code=302)
+        return RedirectResponse(url="/profile", status_code=302)
 
     existing = db.query(models.Collaborator).filter(
         models.Collaborator.owner_id == user.id,
@@ -226,12 +211,12 @@ async def invite_collaborator(
     ).first()
     if existing:
         flash(request, f'{invitee.name or invitee.email} har allerede tilgang.', "error")
-        return RedirectResponse(url="/properties", status_code=302)
+        return RedirectResponse(url="/profile", status_code=302)
 
     db.add(models.Collaborator(owner_id=user.id, user_id=invitee.id))
     db.commit()
     flash(request, f'{invitee.name or invitee.email} kan nå se alle dine eiendommer.', "success")
-    return RedirectResponse(url="/properties", status_code=302)
+    return RedirectResponse(url="/profile", status_code=302)
 
 
 @router.post("/team/{collaborator_id}/remove")
@@ -249,7 +234,7 @@ async def remove_collaborator(
         db.delete(collab)
         db.commit()
         flash(request, "Tilgang fjernet.", "success")
-    return RedirectResponse(url="/properties", status_code=302)
+    return RedirectResponse(url="/profile", status_code=302)
 
 
 @router.post("/team/{collaborator_id}/leave")
@@ -267,4 +252,4 @@ async def leave_team(
         db.delete(collab)
         db.commit()
         flash(request, "Du har forlatt kontoen.", "success")
-    return RedirectResponse(url="/properties", status_code=302)
+    return RedirectResponse(url="/profile", status_code=302)
