@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, Form, Request, UploadFile, File
 from fastapi.responses import RedirectResponse
-from fastapi.templating import Jinja2Templates
+from app.templates_config import templates
 from sqlalchemy.orm import Session
 
 from app import models
@@ -9,7 +9,6 @@ from app.security import get_current_user, flash, get_flashes
 from app.storage import save_file
 
 router = APIRouter(prefix="/properties", tags=["properties"])
-templates = Jinja2Templates(directory="app/templates")
 
 
 @router.get("")
