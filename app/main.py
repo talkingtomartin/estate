@@ -12,7 +12,7 @@ from app.storage import media_url
 # Absolute path to project root (works both locally and on Vercel)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
-app = FastAPI(title="EstateExpenses")
+app = FastAPI(title="Yields")
 
 app.add_middleware(SessionMiddleware, secret_key=SECRET_KEY, max_age=86400 * 30)
 
