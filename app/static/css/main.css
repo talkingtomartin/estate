@@ -714,6 +714,26 @@ textarea { resize: vertical; }
   word-break: break-all;
 }
 
+.attach-ai-status {
+  font-size: 0.78rem;
+  padding: 0.2rem 0.5rem;
+  border-radius: 4px;
+  white-space: nowrap;
+}
+.attach-ai-status.loading { color: var(--accent); animation: pulse 1.2s ease-in-out infinite; }
+.attach-ai-status.success { color: var(--success); background: var(--success-bg); }
+.attach-ai-status.error   { color: var(--danger);  background: var(--danger-bg); }
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.4; }
+}
+
+input.ai-filled, textarea.ai-filled {
+  border-color: var(--accent);
+  background: #ebf8ff;
+}
+
 /* ── Verdiutvikling page ────────────────────────────────────────────────── */
 .val-table-wrap {
   overflow-x: auto;

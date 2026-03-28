@@ -14,6 +14,8 @@ BASE_URL = os.getenv("BASE_URL", "http://localhost:8000")
 
 UPLOAD_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "static", "uploads")
 
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
+
 CLOUDINARY_CLOUD_NAME = os.getenv("CLOUDINARY_CLOUD_NAME", "")
 CLOUDINARY_API_KEY = os.getenv("CLOUDINARY_API_KEY", "")
 CLOUDINARY_API_SECRET = os.getenv("CLOUDINARY_API_SECRET", "")

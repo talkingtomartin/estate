@@ -132,6 +132,8 @@ document.addEventListener('DOMContentLoaded', function () {
         reader.onload = (e) => { img.src = e.target.result; };
         reader.readAsDataURL(file);
         preview.appendChild(img);
+
+        parseReceipt(file, preview);
       }
 
       const nameEl = document.createElement('span');
@@ -141,4 +143,49 @@ document.addEventListener('DOMContentLoaded', function () {
     });
   });
 });
+
+// ── AI receipt parsing ───────────────────────────────────────────────────────
+function parseReceipt(file, previewEl) {
+  const statusEl = document.createElement('span');
+  statusEl.className = 'attach-ai-status loading';
+  statusEl.textContent = '✨ Leser kvittering...';
+  previewEl.appendChild(statusEl);
+
+  const fd = new FormData();
+  fd.append('file', file);
+
+  fetch('/transactions/parse-receipt', { method: 'POST', body: fd })
+    .then(function (r) { return r.json(); })
+    .then(function (data) {
+      if (data.error) {
+        statusEl.className = 'attach-ai-status error';
+        statusEl.textContent = '⚠ ' + data.error;
+        return;
+      }
+
+      const filled = [];
+
+      if (data.amount != null) {
+        const el = document.getElementById('amount');
+        if (el && !el.value) { el.value = data.amount; el.classList.add('ai-filled'); filled.push('beløp'); }
+      }
+
+      if (data.date) {
+        const el = document.getElementById('transaction_date');
+        if (el) { el.value = data.date; el.classList.add('ai-filled'); filled.push('dato'); }
+      }
+
+      if (data.description) {
+        const el = document.getElementById('notes');
+        if (el && !el.value) { el.value = data.description; el.classList.add('ai-filled'); filled.push('notat'); }
+      }
+
+      statusEl.className = 'attach-ai-status success';
+      statusEl.textContent = filled.length ? '✓ Hentet: ' + filled.join(', ') : '✓ Lest – ingen data funnet';
+    })
+    .catch(function () {
+      statusEl.className = 'attach-ai-status error';
+      statusEl.textContent = '⚠ Kunne ikke lese kvitteringen';
+    });
+}
 
