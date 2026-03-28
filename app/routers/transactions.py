@@ -1,15 +1,12 @@
-import base64
 import calendar
-import json
 from datetime import date, timedelta
 
 from fastapi import APIRouter, Depends, Form, Request, UploadFile, File
-from fastapi.responses import RedirectResponse, JSONResponse
+from fastapi.responses import RedirectResponse
 from sqlalchemy import or_, and_
 from sqlalchemy.orm import Session
 
 from app import models
-from app.config import ANTHROPIC_API_KEY
 from app.database import get_db
 from app.security import get_current_user, flash, get_flashes
 from app.storage import save_file
@@ -37,76 +34,6 @@ EXPENSE_CATEGORIES = [
     "Regnskapsfører",
     "Andre utgifter",
 ]
-
-
-# ── Receipt AI parsing ───────────────────────────────────────────────────────
-
-SUPPORTED_IMAGE_TYPES = {"image/jpeg", "image/png", "image/gif", "image/webp"}
-
-@router.post("/transactions/parse-receipt")
-async def parse_receipt(
-    request: Request,
-    file: UploadFile = File(...),
-    user: models.User = Depends(get_current_user),
-):
-    if not ANTHROPIC_API_KEY:
-        return JSONResponse({"error": "AI ikke konfigurert"}, status_code=503)
-
-    media_type = file.content_type or ""
-    if media_type not in SUPPORTED_IMAGE_TYPES:
-        return JSONResponse({"error": "Kun bildefiler støttes (JPEG, PNG, WEBP)"}, status_code=400)
-
-    data = await file.read()
-    if len(data) > 5 * 1024 * 1024:
-        return JSONResponse({"error": "Filen er for stor (maks 5 MB)"}, status_code=400)
-
-    import anthropic
-    client = anthropic.Anthropic(api_key=ANTHROPIC_API_KEY)
-
-    try:
-        response = client.messages.create(
-            model="claude-haiku-4-5-20251001",
-            max_tokens=256,
-            messages=[{
-                "role": "user",
-                "content": [
-                    {
-                        "type": "image",
-                        "source": {
-                            "type": "base64",
-                            "media_type": media_type,
-                            "data": base64.standard_b64encode(data).decode("utf-8"),
-                        },
-                    },
-                    {
-                        "type": "text",
-                        "text": (
-                            "This is a receipt image. Extract the following and return ONLY valid JSON, no extra text:\n"
-                            '{"amount": <total amount as number, no currency symbol>, '
-                            '"date": "<date in YYYY-MM-DD format>", '
-                            '"description": "<short merchant name or item, max 50 chars>"}\n'
-                            "Use null for any value you cannot find. "
-                            "Amount should be the final total to pay. "
-                            "If the receipt is in Norwegian, parse Norwegian date formats."
-                        ),
-                    },
-                ],
-            }],
-        )
-
-        text = response.content[0].text.strip()
-        # Strip markdown code fences if present
-        if text.startswith("```"):
-            text = text.split("```")[1]
-            if text.startswith("json"):
-                text = text[4:]
-        result = json.loads(text)
-        return JSONResponse(result)
-
-    except (json.JSONDecodeError, IndexError):
-        return JSONResponse({"error": "Kunne ikke lese kvitteringen"}, status_code=422)
-    except Exception:
-        return JSONResponse({"error": "Noe gikk galt"}, status_code=500)
 
 
 def _save_attachment(file: UploadFile) -> tuple[str, str] | tuple[None, None]:
