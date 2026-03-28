@@ -77,15 +77,13 @@
     </div>
 
     <div class="form-group">
-      <label for="attachment">Faktura / kvittering</label>
-      <div class="file-upload-area">
-        <input type="file" id="attachment" name="attachment" accept="image/*,.pdf" class="file-input" />
-        <div class="file-upload-label">
-          <span class="file-upload-icon">📎</span>
-          <span class="file-upload-text">Klikk for å laste opp</span>
-          <span class="file-upload-hint">Bilde eller PDF – maks 5 MB</span>
-        </div>
+      <label>Faktura / kvittering</label>
+      <div class="attach-btns">
+        <button type="button" class="btn btn-outline-sm attach-cam-btn" onclick="openAttachCamera('attachment')">📷 Ta bilde</button>
+        <button type="button" class="btn btn-outline-sm" onclick="openAttachFile('attachment')">📎 Velg fil / PDF</button>
       </div>
+      <input type="file" id="attachment" name="attachment" class="attach-input-hidden" />
+      <div id="attachment-preview" class="attach-preview hidden"></div>
     </div>
 
     <div class="form-actions">

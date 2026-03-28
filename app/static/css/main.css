@@ -615,6 +615,50 @@ textarea { resize: vertical; }
 
 .property-shared { font-size: 0.78rem; color: #2b6cb0; margin-top: 0.2rem; }
 
+/* ── Attachment camera / file picker ────────────────────────────────────── */
+.attach-btns {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.attach-cam-btn {
+  /* Slightly highlighted so it reads as the primary camera action */
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.attach-input-hidden {
+  display: none;
+}
+
+.attach-preview {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-top: 0.6rem;
+  padding: 0.5rem 0.75rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+.attach-preview.hidden { display: none; }
+
+.attach-preview-img {
+  width: 56px;
+  height: 56px;
+  object-fit: cover;
+  border-radius: 4px;
+  flex-shrink: 0;
+}
+
+.attach-preview-name {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  word-break: break-all;
+}
+
 /* ── Verdiutvikling page ────────────────────────────────────────────────── */
 .val-table-wrap {
   overflow-x: auto;
