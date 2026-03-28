@@ -39,10 +39,11 @@ def save_file(file: UploadFile, folder: str) -> str | None:
         return None
 
     if USE_CLOUDINARY:
+        resource_type = "raw" if ext == ".pdf" else "auto"
         result = cloudinary.uploader.upload(
             content,
             folder=f"estate/{folder}",
-            resource_type="auto",
+            resource_type=resource_type,
         )
         return result["secure_url"]
 
