@@ -1,0 +1,157 @@
+{% extends "base.html" %}
+{% block title %}Verdiutvikling – Yields{% endblock %}
+
+{% block head %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <h1>Verdiutvikling</h1>
+</div>
+
+{% macro fmt(val) %}{{ "{:,.0f}".format(val).replace(",", " ") }} kr{% endmacro %}
+{% macro fmtpct(val) %}{% if val >= 0 %}+{% endif %}{{ "%.1f"|format(val) }}%{% endmacro %}
+
+<!-- Table -->
+<div class="val-table-wrap">
+  <table class="val-table">
+    <thead>
+      <tr>
+        <th class="val-col-name">Eiendom</th>
+        <th class="val-col-num">Kjøpesum</th>
+        <th class="val-col-num">Investeringer</th>
+        <th class="val-col-num">Total kostpris</th>
+        <th class="val-col-num">Nåverdi</th>
+        <th class="val-col-num">Gevinst</th>
+        <th class="val-col-num">%</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for r in rows %}
+      <tr>
+        <td class="val-col-name">
+          <a href="/properties/{{ r.prop.id }}" class="val-prop-link">{{ r.prop.name }}</a>
+          {% if r.prop.user_id != user.id %}
+          <span class="badge badge-category">delt</span>
+          {% endif %}
+        </td>
+        <td class="val-col-num">
+          {% if r.purchase_price %}{{ fmt(r.purchase_price) }}{% else %}<span class="val-empty">–</span>{% endif %}
+        </td>
+        <td class="val-col-num">
+          {% if r.total_investments > 0 %}{{ fmt(r.total_investments) }}{% else %}<span class="val-empty">–</span>{% endif %}
+        </td>
+        <td class="val-col-num val-bold">
+          {% if r.cost_basis %}{{ fmt(r.cost_basis) }}{% else %}<span class="val-empty">–</span>{% endif %}
+        </td>
+        <td class="val-col-num val-bold">
+          {% if r.current_value %}{{ fmt(r.current_value) }}{% else %}<span class="val-empty">–</span>{% endif %}
+        </td>
+        <td class="val-col-num {% if r.gain is not none %}{% if r.gain >= 0 %}val-gain{% else %}val-loss{% endif %}{% endif %}">
+          {% if r.gain is not none %}
+            {% if r.gain >= 0 %}+{% endif %}{{ fmt(r.gain) }}
+          {% else %}<span class="val-empty">–</span>{% endif %}
+        </td>
+        <td class="val-col-num {% if r.gain_pct is not none %}{% if r.gain_pct >= 0 %}val-gain{% else %}val-loss{% endif %}{% endif %}">
+          {% if r.gain_pct is not none %}{{ fmtpct(r.gain_pct) }}{% else %}<span class="val-empty">–</span>{% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+    <tfoot>
+      <tr class="val-total-row">
+        <td class="val-col-name">Totalt</td>
+        <td class="val-col-num">{% if total_purchase %}{{ fmt(total_purchase) }}{% else %}–{% endif %}</td>
+        <td class="val-col-num">{% if total_investments_all %}{{ fmt(total_investments_all) }}{% else %}–{% endif %}</td>
+        <td class="val-col-num">{% if total_cost_basis %}{{ fmt(total_cost_basis) }}{% else %}–{% endif %}</td>
+        <td class="val-col-num">{% if total_current %}{{ fmt(total_current) }}{% else %}–{% endif %}</td>
+        <td class="val-col-num {% if total_gain is not none %}{% if total_gain >= 0 %}val-gain{% else %}val-loss{% endif %}{% endif %}">
+          {% if total_gain is not none %}{% if total_gain >= 0 %}+{% endif %}{{ fmt(total_gain) }}{% else %}–{% endif %}
+        </td>
+        <td class="val-col-num {% if total_gain_pct is not none %}{% if total_gain_pct >= 0 %}val-gain{% else %}val-loss{% endif %}{% endif %}">
+          {% if total_gain_pct is not none %}{{ fmtpct(total_gain_pct) }}{% else %}–{% endif %}
+        </td>
+      </tr>
+    </tfoot>
+  </table>
+</div>
+
+<!-- Chart -->
+<div class="val-chart-wrap">
+  <h2 class="val-chart-title">Kostpris vs. nåverdi</h2>
+  <div class="val-chart-container">
+    <canvas id="valuationChart"></canvas>
+  </div>
+</div>
+
+<script>
+(function () {
+  const data = {{ chart_data | safe }};
+  if (!data.labels.length) return;
+
+  const fmt = (val) =>
+    new Intl.NumberFormat("nb-NO", { maximumFractionDigits: 0 }).format(val) + " kr";
+
+  const ctx = document.getElementById("valuationChart").getContext("2d");
+  new Chart(ctx, {
+    type: "bar",
+    data: {
+      labels: data.labels,
+      datasets: [
+        {
+          label: "Total kostpris",
+          data: data.cost,
+          backgroundColor: "rgba(49, 130, 206, 0.75)",
+          borderColor: "rgba(49, 130, 206, 1)",
+          borderWidth: 1,
+          borderRadius: 4,
+        },
+        {
+          label: "Nåverdi",
+          data: data.value,
+          backgroundColor: data.value.map((v, i) =>
+            v >= data.cost[i]
+              ? "rgba(39, 103, 73, 0.75)"
+              : "rgba(197, 48, 48, 0.75)"
+          ),
+          borderColor: data.value.map((v, i) =>
+            v >= data.cost[i]
+              ? "rgba(39, 103, 73, 1)"
+              : "rgba(197, 48, 48, 1)"
+          ),
+          borderWidth: 1,
+          borderRadius: 4,
+        },
+      ],
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: true,
+      plugins: {
+        legend: { position: "top" },
+        tooltip: {
+          callbacks: {
+            label: (ctx) => " " + ctx.dataset.label + ": " + fmt(ctx.parsed.y),
+          },
+        },
+      },
+      scales: {
+        y: {
+          beginAtZero: true,
+          ticks: {
+            callback: (val) =>
+              new Intl.NumberFormat("nb-NO", {
+                notation: "compact",
+                maximumFractionDigits: 1,
+              }).format(val),
+          },
+          grid: { color: "rgba(0,0,0,0.06)" },
+        },
+        x: { grid: { display: false } },
+      },
+    },
+  });
+})();
+</script>
+{% endblock %}

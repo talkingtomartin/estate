@@ -615,6 +615,81 @@ textarea { resize: vertical; }
 
 .property-shared { font-size: 0.78rem; color: #2b6cb0; margin-top: 0.2rem; }
 
+/* ── Verdiutvikling page ────────────────────────────────────────────────── */
+.val-table-wrap {
+  overflow-x: auto;
+  margin-bottom: 2rem;
+}
+
+.val-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+}
+
+.val-table th {
+  padding: 0.6rem 0.9rem;
+  text-align: right;
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+  border-bottom: 2px solid var(--border);
+  white-space: nowrap;
+}
+
+.val-table th.val-col-name { text-align: left; }
+
+.val-table td {
+  padding: 0.65rem 0.9rem;
+  text-align: right;
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+
+.val-table tbody tr:hover { background: var(--bg); }
+
+.val-col-name { text-align: left !important; }
+
+.val-bold { font-weight: 600; }
+.val-gain { color: var(--success); font-weight: 600; }
+.val-loss { color: var(--danger); font-weight: 600; }
+.val-empty { color: var(--text-muted); }
+
+.val-prop-link {
+  color: var(--text);
+  text-decoration: none;
+  font-weight: 500;
+}
+.val-prop-link:hover { color: var(--accent); text-decoration: underline; }
+
+.val-total-row {
+  background: var(--surface);
+  font-weight: 600;
+  border-top: 2px solid var(--border);
+}
+
+.val-total-row td { border-bottom: none; }
+
+.val-chart-wrap {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 1.5rem;
+}
+
+.val-chart-title {
+  font-size: 1rem;
+  font-weight: 600;
+  margin-bottom: 1.25rem;
+}
+
+.val-chart-container {
+  position: relative;
+  max-height: 380px;
+}
+
 /* ── Property valuation ─────────────────────────────────────────────────── */
 .valuation-section {
   margin-bottom: 1.5rem;
