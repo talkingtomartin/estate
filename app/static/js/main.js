@@ -136,10 +136,10 @@ document.addEventListener('DOMContentLoaded', function () {
 
       const nameEl = document.createElement('span');
       nameEl.className = 'attach-preview-name';
-      nameEl.textContent = file.name;
+      nameEl.textContent = '📄 ' + file.name;
       preview.appendChild(nameEl);
 
-      // Call AI for both images and PDFs
+      // AI parsing for images and PDFs
       const isPdf = file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf');
       if (file.type.startsWith('image/') || isPdf) {
         parseReceipt(file, preview);
@@ -171,7 +171,7 @@ function parseReceipt(file, previewEl) {
 
       if (data.amount != null) {
         const el = document.getElementById('amount');
-        if (el && !el.value) { el.value = data.amount; el.classList.add('ai-filled'); filled.push('beløp'); }
+        if (el && !el.value) { el.value = Math.round(data.amount); el.classList.add('ai-filled'); filled.push('beløp'); }
       }
 
       if (data.date) {
@@ -180,12 +180,12 @@ function parseReceipt(file, previewEl) {
       }
 
       if (data.description) {
-        const el = document.getElementById('notes');
-        if (el && !el.value) { el.value = data.description; el.classList.add('ai-filled'); filled.push('notat'); }
+        const el = document.getElementById('description');
+        if (el && !el.value) { el.value = data.description; el.classList.add('ai-filled'); filled.push('beskrivelse'); }
       }
 
       statusEl.className = 'attach-ai-status success';
-      statusEl.textContent = filled.length ? '✓ Hentet: ' + filled.join(', ') : '✓ Lest – ingen data funnet';
+      statusEl.textContent = '✓ Kvittering lest' + (filled.length ? ' – hentet ' + filled.join(', ') : '');
     })
     .catch(function () {
       statusEl.className = 'attach-ai-status error';
