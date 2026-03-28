@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+{% block title %}Feil – EstateExpenses{% endblock %}
+{% block content %}
+<div class="card" style="max-width:480px;margin:4rem auto;text-align:center;">
+  <h1 style="font-size:3rem;color:var(--danger);">{{ status_code }}</h1>
+  <p>{{ detail }}</p>
+  <a href="/" class="btn btn-primary" style="margin-top:1rem;">Gå til forsiden</a>
+</div>
+{% endblock %}

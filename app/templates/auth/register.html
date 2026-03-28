@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block title %}Registrer deg – EstateExpenses{% endblock %}
+{% block content %}
+<div class="auth-card">
+  <div class="auth-logo">🏠</div>
+  <h1 class="auth-title">Opprett konto</h1>
+  <p class="auth-subtitle">Kom i gang med EstateExpenses</p>
+
+  <form method="post" action="/auth/register" class="form">
+    <div class="form-group">
+      <label for="name">Navn</label>
+      <input type="text" id="name" name="name" required autocomplete="name" placeholder="Ola Nordmann" />
+    </div>
+    <div class="form-group">
+      <label for="email">E-post</label>
+      <input type="email" id="email" name="email" required autocomplete="email" placeholder="din@epost.no" />
+    </div>
+    <div class="form-group">
+      <label for="password">Passord <span class="hint">(min. 8 tegn)</span></label>
+      <input type="password" id="password" name="password" required minlength="8" autocomplete="new-password" placeholder="••••••••" />
+    </div>
+    <button type="submit" class="btn btn-primary btn-full">Opprett konto</button>
+  </form>
+
+  <p class="auth-footer">Har du allerede konto? <a href="/auth/login">Logg inn</a></p>
+</div>
+{% endblock %}

@@ -1,0 +1,129 @@
+{% extends "base.html" %}
+{% block title %}{{ prop.name }} – EstateExpenses{% endblock %}
+{% block content %}
+
+<div class="page-header">
+  <a href="/properties" class="back-link">← Mine eiendommer</a>
+  <form method="post" action="/properties/{{ prop.id }}/delete"
+        onsubmit="return confirm('Slett eiendommen «{{ prop.name }}»? Dette kan ikke angres.')">
+    <button type="submit" class="btn btn-danger-sm">Slett eiendom</button>
+  </form>
+</div>
+
+<!-- Property header -->
+<div class="property-header">
+  {% if prop.image_path %}
+  <img src="/static/{{ prop.image_path }}" alt="{{ prop.name }}" class="property-hero-img" />
+  {% endif %}
+  <div class="property-header-info">
+    <h1>{{ prop.name }}</h1>
+    {% if prop.address %}<p class="property-address">📍 {{ prop.address }}</p>{% endif %}
+  </div>
+</div>
+
+<!-- Month navigation -->
+<div class="month-nav">
+  <a href="/properties/{{ prop.id }}?year={{ prev_year }}&month={{ prev_month }}" class="btn btn-outline-sm">← Forrige</a>
+  <span class="month-label">{{ month_name }} {{ year }}</span>
+  <a href="/properties/{{ prop.id }}?year={{ next_year }}&month={{ next_month }}" class="btn btn-outline-sm">Neste →</a>
+</div>
+
+<!-- Summary cards -->
+<div class="summary-grid">
+  <div class="summary-card summary-income">
+    <span class="summary-label">Inntekter</span>
+    <span class="summary-amount">{{ "{:,.0f}".format(total_income).replace(",", " ") }} kr</span>
+  </div>
+  <div class="summary-card summary-expense">
+    <span class="summary-label">Utgifter</span>
+    <span class="summary-amount">{{ "{:,.0f}".format(total_expenses).replace(",", " ") }} kr</span>
+  </div>
+  <div class="summary-card {% if net >= 0 %}summary-income{% else %}summary-expense{% endif %}">
+    <span class="summary-label">Resultat</span>
+    <span class="summary-amount">{{ "{:,.0f}".format(net).replace(",", " ") }} kr</span>
+  </div>
+</div>
+
+<!-- Action buttons -->
+<div class="action-bar">
+  <a href="/properties/{{ prop.id }}/transactions/new?type=income" class="btn btn-income">+ Legg til inntekt</a>
+  <a href="/properties/{{ prop.id }}/transactions/new?type=expense" class="btn btn-expense">+ Legg til utgift</a>
+</div>
+
+<!-- Transactions -->
+{% if transactions %}
+
+{% if income %}
+<section class="txn-section">
+  <h2 class="txn-section-title income-title">Inntekter</h2>
+  <div class="txn-list">
+    {% for t in income %}
+    <div class="txn-item">
+      <div class="txn-main">
+        <div class="txn-desc">
+          {{ t.description }}
+          {% if t.is_recurring %}<span class="badge badge-recurring">Månedlig</span>{% endif %}
+          {% if t.category %}<span class="badge badge-category">{{ t.category }}</span>{% endif %}
+        </div>
+        <div class="txn-meta">{{ t.date.strftime("%d.%m.%Y") }}</div>
+      </div>
+      <div class="txn-right">
+        <span class="txn-amount income-amount">+ {{ "{:,.0f}".format(t.amount).replace(",", " ") }} kr</span>
+        <div class="txn-actions">
+          {% if t.attachments %}
+          <a href="/transactions/{{ t.id }}/edit" class="btn btn-icon" title="Vedlegg">📎</a>
+          {% endif %}
+          <a href="/transactions/{{ t.id }}/edit" class="btn btn-icon" title="Rediger">✏️</a>
+          <form method="post" action="/transactions/{{ t.id }}/delete"
+                onsubmit="return confirm('Slett denne transaksjonen?')">
+            <button type="submit" class="btn btn-icon" title="Slett">🗑️</button>
+          </form>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+</section>
+{% endif %}
+
+{% if expenses %}
+<section class="txn-section">
+  <h2 class="txn-section-title expense-title">Utgifter</h2>
+  <div class="txn-list">
+    {% for t in expenses %}
+    <div class="txn-item">
+      <div class="txn-main">
+        <div class="txn-desc">
+          {{ t.description }}
+          {% if t.is_recurring %}<span class="badge badge-recurring">Fast månedlig</span>{% endif %}
+          {% if t.category %}<span class="badge badge-category">{{ t.category }}</span>{% endif %}
+        </div>
+        <div class="txn-meta">{{ t.date.strftime("%d.%m.%Y") }}</div>
+      </div>
+      <div class="txn-right">
+        <span class="txn-amount expense-amount">- {{ "{:,.0f}".format(t.amount).replace(",", " ") }} kr</span>
+        <div class="txn-actions">
+          {% if t.attachments %}
+          <a href="/transactions/{{ t.id }}/edit" class="btn btn-icon" title="Vedlegg">📎</a>
+          {% endif %}
+          <a href="/transactions/{{ t.id }}/edit" class="btn btn-icon" title="Rediger">✏️</a>
+          <form method="post" action="/transactions/{{ t.id }}/delete"
+                onsubmit="return confirm('Slett denne transaksjonen?')">
+            <button type="submit" class="btn btn-icon" title="Slett">🗑️</button>
+          </form>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+</section>
+{% endif %}
+
+{% else %}
+<div class="empty-state">
+  <div class="empty-icon">📊</div>
+  <p>Ingen transaksjoner for {{ month_name }} {{ year }}.</p>
+</div>
+{% endif %}
+
+{% endblock %}

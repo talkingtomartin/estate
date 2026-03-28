@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block title %}Mine eiendommer – EstateExpenses{% endblock %}
+{% block content %}
+<div class="page-header">
+  <h1>Mine eiendommer</h1>
+  <a href="/properties/new" class="btn btn-primary">+ Legg til eiendom</a>
+</div>
+
+{% if properties %}
+<div class="property-grid">
+  {% for prop in properties %}
+  <a href="/properties/{{ prop.id }}" class="property-card">
+    <div class="property-image">
+      {% if prop.image_path %}
+      <img src="/static/{{ prop.image_path }}" alt="{{ prop.name }}" />
+      {% else %}
+      <div class="property-image-placeholder">🏠</div>
+      {% endif %}
+    </div>
+    <div class="property-info">
+      <h2>{{ prop.name }}</h2>
+      {% if prop.address %}
+      <p class="property-address">📍 {{ prop.address }}</p>
+      {% endif %}
+    </div>
+  </a>
+  {% endfor %}
+</div>
+{% else %}
+<div class="empty-state">
+  <div class="empty-icon">🏠</div>
+  <h2>Ingen eiendommer ennå</h2>
+  <p>Legg til din første eiendom for å komme i gang.</p>
+  <a href="/properties/new" class="btn btn-primary">+ Legg til eiendom</a>
+</div>
+{% endif %}
+{% endblock %}

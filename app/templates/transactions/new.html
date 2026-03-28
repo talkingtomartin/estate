@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+{% block title %}Ny transaksjon – {{ prop.name }}{% endblock %}
+{% block content %}
+<div class="page-header">
+  <a href="/properties/{{ prop.id }}" class="back-link">← {{ prop.name }}</a>
+</div>
+
+<div class="form-card">
+  <h1>Legg til transaksjon</h1>
+  <p class="form-subtitle">{{ prop.name }}</p>
+
+  <form method="post" action="/properties/{{ prop.id }}/transactions/new"
+        enctype="multipart/form-data" class="form">
+
+    <!-- Type -->
+    <div class="form-group">
+      <label>Type</label>
+      <div class="radio-group">
+        <label class="radio-label">
+          <input type="radio" name="type" value="income"
+                 {% if default_type == "income" %}checked{% endif %}
+                 onchange="switchType('income')" />
+          <span class="radio-btn income-radio">Inntekt</span>
+        </label>
+        <label class="radio-label">
+          <input type="radio" name="type" value="expense"
+                 {% if default_type != "income" %}checked{% endif %}
+                 onchange="switchType('expense')" />
+          <span class="radio-btn expense-radio">Utgift</span>
+        </label>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label for="description">Beskrivelse *</label>
+      <input type="text" id="description" name="description" required placeholder="F.eks. Husleie januar" />
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label for="amount">Beløp (kr) *</label>
+        <input type="number" id="amount" name="amount" required min="0" step="0.01" placeholder="0.00" />
+      </div>
+      <div class="form-group">
+        <label for="transaction_date">Dato *</label>
+        <input type="date" id="transaction_date" name="transaction_date" required value="{{ today }}" />
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label for="category">Kategori</label>
+      <select id="category" name="category">
+        <option value="">– Velg kategori –</option>
+        <optgroup label="Inntekter" id="income-options" {% if default_type != "income" %}style="display:none"{% endif %}>
+          {% for cat in income_categories %}
+          <option value="{{ cat }}">{{ cat }}</option>
+          {% endfor %}
+        </optgroup>
+        <optgroup label="Utgifter" id="expense-options" {% if default_type == "income" %}style="display:none"{% endif %}>
+          {% for cat in expense_categories %}
+          <option value="{{ cat }}">{{ cat }}</option>
+          {% endfor %}
+        </optgroup>
+      </select>
+    </div>
+
+    <div class="form-group" id="recurringGroup">
+      <label class="checkbox-label">
+        <input type="checkbox" name="is_recurring" id="is_recurring" />
+        <span>Fast månedlig {% if default_type == "income" %}inntekt{% else %}utgift{% endif %} (gjentas hver måned)</span>
+      </label>
+    </div>
+
+    <div class="form-group">
+      <label for="notes">Notater</label>
+      <textarea id="notes" name="notes" rows="2" placeholder="Valgfrie notater..."></textarea>
+    </div>
+
+    <div class="form-group">
+      <label for="attachment">Faktura / kvittering</label>
+      <div class="file-upload-area">
+        <input type="file" id="attachment" name="attachment" accept="image/*,.pdf" class="file-input" />
+        <div class="file-upload-label">
+          <span class="file-upload-icon">📎</span>
+          <span class="file-upload-text">Klikk for å laste opp</span>
+          <span class="file-upload-hint">Bilde eller PDF – maks 5 MB</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="form-actions">
+      <a href="/properties/{{ prop.id }}" class="btn btn-secondary">Avbryt</a>
+      <button type="submit" class="btn btn-primary">Lagre transaksjon</button>
+    </div>
+  </form>
+</div>
+{% endblock %}
