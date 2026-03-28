@@ -113,7 +113,7 @@ document.addEventListener('DOMContentLoaded', function () {
     }
   });
 
-  // Preview for hidden attachment inputs (camera / file picker)
+  // Preview + AI receipt parsing for hidden attachment inputs
   document.querySelectorAll('.attach-input-hidden').forEach(function (input) {
     input.addEventListener('change', function () {
       const file = this.files[0];
@@ -132,6 +132,9 @@ document.addEventListener('DOMContentLoaded', function () {
         reader.onload = (e) => { img.src = e.target.result; };
         reader.readAsDataURL(file);
         preview.appendChild(img);
+
+        // AI parsing
+        parseReceipt(file, preview);
       }
 
       const nameEl = document.createElement('span');
@@ -141,3 +144,62 @@ document.addEventListener('DOMContentLoaded', function () {
     });
   });
 });
+
+// ── AI receipt parsing ───────────────────────────────────────────────────────
+function parseReceipt(file, previewEl) {
+  const statusEl = document.createElement('span');
+  statusEl.className = 'attach-ai-status loading';
+  statusEl.textContent = '✨ Leser kvittering...';
+  previewEl.appendChild(statusEl);
+
+  const fd = new FormData();
+  fd.append('file', file);
+
+  fetch('/transactions/parse-receipt', { method: 'POST', body: fd })
+    .then(function (r) { return r.json(); })
+    .then(function (data) {
+      if (data.error) {
+        statusEl.className = 'attach-ai-status error';
+        statusEl.textContent = '⚠ ' + data.error;
+        return;
+      }
+
+      let filled = [];
+
+      if (data.amount != null) {
+        const amountEl = document.getElementById('amount');
+        if (amountEl && !amountEl.value) {
+          amountEl.value = data.amount;
+          amountEl.classList.add('ai-filled');
+          filled.push('beløp');
+        }
+      }
+
+      if (data.date) {
+        const dateEl = document.getElementById('transaction_date');
+        if (dateEl) {
+          dateEl.value = data.date;
+          dateEl.classList.add('ai-filled');
+          filled.push('dato');
+        }
+      }
+
+      if (data.description) {
+        const descEl = document.getElementById('description');
+        if (descEl && !descEl.value) {
+          descEl.value = data.description;
+          descEl.classList.add('ai-filled');
+          filled.push('beskrivelse');
+        }
+      }
+
+      statusEl.className = 'attach-ai-status success';
+      statusEl.textContent = filled.length
+        ? '✓ Hentet: ' + filled.join(', ')
+        : '✓ Lest – ingen data funnet';
+    })
+    .catch(function () {
+      statusEl.className = 'attach-ai-status error';
+      statusEl.textContent = '⚠ Kunne ikke lese kvitteringen';
+    });
+}
