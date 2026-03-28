@@ -4,19 +4,12 @@
 
 <div class="page-header">
   <a href="/properties" class="back-link">← Mine eiendommer</a>
-  <div style="display:flex;gap:.5rem;align-items:center;">
-    {% if role == "owner" %}
-    <form method="post" action="/properties/{{ prop.id }}/delete"
-          onsubmit="return confirm('Slett eiendommen «{{ prop.name }}»? Dette kan ikke angres.')">
-      <button type="submit" class="btn btn-danger-sm">Slett eiendom</button>
-    </form>
-    {% else %}
-    <form method="post" action="/properties/{{ prop.id }}/leave"
-          onsubmit="return confirm('Forlate eiendommen «{{ prop.name }}»?')">
-      <button type="submit" class="btn btn-danger-sm">Forlat eiendom</button>
-    </form>
-    {% endif %}
-  </div>
+  {% if is_owner %}
+  <form method="post" action="/properties/{{ prop.id }}/delete"
+        onsubmit="return confirm('Slett eiendommen «{{ prop.name }}»? Dette kan ikke angres.')">
+    <button type="submit" class="btn btn-danger-sm">Slett eiendom</button>
+  </form>
+  {% endif %}
 </div>
 
 <!-- Property header -->
@@ -134,38 +127,5 @@
   <p>Ingen transaksjoner for {{ month_name }} {{ year }}.</p>
 </div>
 {% endif %}
-
-<!-- Samarbeidspartnere -->
-<section class="collab-section">
-  <h2 class="collab-title">👥 Samarbeidspartnere</h2>
-
-  <div class="collab-list">
-    <div class="collab-item">
-      <span class="collab-name">{{ prop.user.name or prop.user.email }}</span>
-      <span class="badge badge-owner">Eier</span>
-    </div>
-    {% for m in members %}
-    <div class="collab-item">
-      <span class="collab-name">{{ m.user.name or m.user.email }}</span>
-      <span class="collab-email">{{ m.user.email }}</span>
-      {% if role == "owner" %}
-      <form method="post" action="/properties/{{ prop.id }}/members/{{ m.id }}/remove"
-            onsubmit="return confirm('Fjerne tilgangen til {{ m.user.name or m.user.email }}?')"
-            style="margin-left:auto">
-        <button type="submit" class="btn btn-icon btn-danger-icon" title="Fjern">✕</button>
-      </form>
-      {% endif %}
-    </div>
-    {% endfor %}
-  </div>
-
-  {% if role == "owner" %}
-  <form method="post" action="/properties/{{ prop.id }}/invite" class="collab-invite-form">
-    <input type="email" name="email" placeholder="Inviter via e-postadresse..." required />
-    <button type="submit" class="btn btn-primary">Inviter</button>
-  </form>
-  <p class="collab-hint">Personen må være registrert i EstateExpenses.</p>
-  {% endif %}
-</section>
 
 {% endblock %}

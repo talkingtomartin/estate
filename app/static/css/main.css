@@ -611,6 +611,7 @@ textarea { resize: vertical; }
   font-size: 0.875rem;
 }
 .collab-hint { font-size: 0.75rem; color: var(--text-muted); margin-top: 0.5rem; }
+.collab-label { font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.5rem; }
 
 .property-shared { font-size: 0.78rem; color: #2b6cb0; margin-top: 0.2rem; }
 

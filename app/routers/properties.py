@@ -24,22 +24,23 @@ def _month_name(month: int) -> str:
     return MONTHS[month - 1]
 
 
-def _get_accessible_property(
-    db: Session, property_id: int, user_id: int
-) -> tuple[models.Property | None, str | None]:
-    """Return (property, role) where role is 'owner' or 'member', or (None, None)."""
-    prop = db.query(models.Property).filter(models.Property.id == property_id).first()
-    if not prop:
-        return None, None
-    if prop.user_id == user_id:
-        return prop, "owner"
-    member = db.query(models.PropertyMember).filter(
-        models.PropertyMember.property_id == property_id,
-        models.PropertyMember.user_id == user_id,
+def _accessible_owner_ids(db: Session, user_id: int) -> list[int]:
+    """Return list of owner IDs whose properties the current user can access (includes self)."""
+    collab_owner_ids = [
+        row.owner_id for row in
+        db.query(models.Collaborator.owner_id)
+        .filter(models.Collaborator.user_id == user_id)
+        .all()
+    ]
+    return [user_id] + collab_owner_ids
+
+
+def _can_access_property(db: Session, property_id: int, user_id: int) -> models.Property | None:
+    owner_ids = _accessible_owner_ids(db, user_id)
+    return db.query(models.Property).filter(
+        models.Property.id == property_id,
+        models.Property.user_id.in_(owner_ids),
     ).first()
-    if member:
-        return prop, "member"
-    return None, None
 
 
 @router.get("")
@@ -48,26 +49,32 @@ async def list_properties(
     db: Session = Depends(get_db),
     user: models.User = Depends(get_current_user),
 ):
-    # Show owned properties + properties shared with user
-    owned = (
+    owner_ids = _accessible_owner_ids(db, user.id)
+    properties = (
         db.query(models.Property)
-        .filter(models.Property.user_id == user.id)
+        .filter(models.Property.user_id.in_(owner_ids))
+        .order_by(models.Property.user_id != user.id, models.Property.created_at.desc())
         .all()
     )
-    shared = (
-        db.query(models.Property)
-        .join(models.PropertyMember, models.PropertyMember.property_id == models.Property.id)
-        .filter(models.PropertyMember.user_id == user.id)
+
+    # Collaborators I've invited
+    my_collaborators = (
+        db.query(models.Collaborator)
+        .filter(models.Collaborator.owner_id == user.id)
         .all()
     )
-    # Merge, preserve order: owned first then shared
-    seen = {p.id for p in owned}
-    properties = owned + [p for p in shared if p.id not in seen]
+    # Accounts I collaborate on
+    my_memberships = (
+        db.query(models.Collaborator)
+        .filter(models.Collaborator.user_id == user.id)
+        .all()
+    )
 
     return templates.TemplateResponse(request, "properties/index.html", {
         "user": user,
         "properties": properties,
-        "shared_ids": {p.id for p in shared},
+        "my_collaborators": my_collaborators,
+        "my_memberships": my_memberships,
         "flash_messages": get_flashes(request),
     })
 
@@ -115,10 +122,12 @@ async def property_detail(
     db: Session = Depends(get_db),
     user: models.User = Depends(get_current_user),
 ):
-    prop, role = _get_accessible_property(db, property_id, user.id)
+    prop = _can_access_property(db, property_id, user.id)
     if not prop:
         flash(request, "Eiendommen ble ikke funnet.", "error")
         return RedirectResponse(url="/properties", status_code=302)
+
+    is_owner = prop.user_id == user.id
 
     today = date.today()
     year = year or today.year
@@ -154,17 +163,10 @@ async def property_detail(
     prev_month_date = month_start - timedelta(days=1)
     next_month_date = month_end + timedelta(days=1)
 
-    members = (
-        db.query(models.PropertyMember)
-        .filter(models.PropertyMember.property_id == property_id)
-        .all()
-    )
-
     return templates.TemplateResponse(request, "properties/detail.html", {
         "user": user,
         "prop": prop,
-        "role": role,
-        "members": members,
+        "is_owner": is_owner,
         "transactions": transactions,
         "income": income,
         "expenses": expenses,
@@ -182,94 +184,6 @@ async def property_detail(
     })
 
 
-@router.post("/{property_id}/invite")
-async def invite_member(
-    property_id: int,
-    request: Request,
-    email: str = Form(...),
-    db: Session = Depends(get_db),
-    user: models.User = Depends(get_current_user),
-):
-    prop = db.query(models.Property).filter(
-        models.Property.id == property_id,
-        models.Property.user_id == user.id,
-    ).first()
-    if not prop:
-        flash(request, "Kun eieren kan invitere samarbeidspartnere.", "error")
-        return RedirectResponse(url=f"/properties/{property_id}", status_code=302)
-
-    invitee = db.query(models.User).filter(models.User.email == email.lower()).first()
-    if not invitee:
-        flash(request, f'Ingen bruker med e-post «{email}» er registrert.', "error")
-        return RedirectResponse(url=f"/properties/{property_id}", status_code=302)
-
-    if invitee.id == user.id:
-        flash(request, "Du kan ikke invitere deg selv.", "error")
-        return RedirectResponse(url=f"/properties/{property_id}", status_code=302)
-
-    existing = db.query(models.PropertyMember).filter(
-        models.PropertyMember.property_id == property_id,
-        models.PropertyMember.user_id == invitee.id,
-    ).first()
-    if existing:
-        flash(request, f'{invitee.name or invitee.email} har allerede tilgang.', "error")
-        return RedirectResponse(url=f"/properties/{property_id}", status_code=302)
-
-    db.add(models.PropertyMember(
-        property_id=property_id,
-        user_id=invitee.id,
-        invited_by_id=user.id,
-    ))
-    db.commit()
-    flash(request, f'{invitee.name or invitee.email} ble lagt til som samarbeidspartner.', "success")
-    return RedirectResponse(url=f"/properties/{property_id}", status_code=302)
-
-
-@router.post("/{property_id}/members/{member_id}/remove")
-async def remove_member(
-    property_id: int,
-    member_id: int,
-    request: Request,
-    db: Session = Depends(get_db),
-    user: models.User = Depends(get_current_user),
-):
-    prop = db.query(models.Property).filter(
-        models.Property.id == property_id,
-        models.Property.user_id == user.id,
-    ).first()
-    if not prop:
-        flash(request, "Kun eieren kan fjerne samarbeidspartnere.", "error")
-        return RedirectResponse(url=f"/properties/{property_id}", status_code=302)
-
-    member = db.query(models.PropertyMember).filter(
-        models.PropertyMember.id == member_id,
-        models.PropertyMember.property_id == property_id,
-    ).first()
-    if member:
-        db.delete(member)
-        db.commit()
-        flash(request, "Samarbeidspartner fjernet.", "success")
-    return RedirectResponse(url=f"/properties/{property_id}", status_code=302)
-
-
-@router.post("/{property_id}/leave")
-async def leave_property(
-    property_id: int,
-    request: Request,
-    db: Session = Depends(get_db),
-    user: models.User = Depends(get_current_user),
-):
-    member = db.query(models.PropertyMember).filter(
-        models.PropertyMember.property_id == property_id,
-        models.PropertyMember.user_id == user.id,
-    ).first()
-    if member:
-        db.delete(member)
-        db.commit()
-        flash(request, "Du har forlatt eiendommen.", "success")
-    return RedirectResponse(url="/properties", status_code=302)
-
-
 @router.post("/{property_id}/delete")
 async def delete_property(
     property_id: int,
@@ -285,4 +199,72 @@ async def delete_property(
         db.delete(prop)
         db.commit()
         flash(request, f'Eiendommen "{prop.name}" ble slettet.', "success")
+    return RedirectResponse(url="/properties", status_code=302)
+
+
+# ── Account-level collaboration ──────────────────────────────────────────────
+
+@router.post("/team/invite")
+async def invite_collaborator(
+    request: Request,
+    email: str = Form(...),
+    db: Session = Depends(get_db),
+    user: models.User = Depends(get_current_user),
+):
+    invitee = db.query(models.User).filter(models.User.email == email.lower()).first()
+    if not invitee:
+        flash(request, f'Ingen bruker med e-post «{email}» er registrert.', "error")
+        return RedirectResponse(url="/properties", status_code=302)
+
+    if invitee.id == user.id:
+        flash(request, "Du kan ikke invitere deg selv.", "error")
+        return RedirectResponse(url="/properties", status_code=302)
+
+    existing = db.query(models.Collaborator).filter(
+        models.Collaborator.owner_id == user.id,
+        models.Collaborator.user_id == invitee.id,
+    ).first()
+    if existing:
+        flash(request, f'{invitee.name or invitee.email} har allerede tilgang.', "error")
+        return RedirectResponse(url="/properties", status_code=302)
+
+    db.add(models.Collaborator(owner_id=user.id, user_id=invitee.id))
+    db.commit()
+    flash(request, f'{invitee.name or invitee.email} kan nå se alle dine eiendommer.', "success")
+    return RedirectResponse(url="/properties", status_code=302)
+
+
+@router.post("/team/{collaborator_id}/remove")
+async def remove_collaborator(
+    collaborator_id: int,
+    request: Request,
+    db: Session = Depends(get_db),
+    user: models.User = Depends(get_current_user),
+):
+    collab = db.query(models.Collaborator).filter(
+        models.Collaborator.id == collaborator_id,
+        models.Collaborator.owner_id == user.id,
+    ).first()
+    if collab:
+        db.delete(collab)
+        db.commit()
+        flash(request, "Tilgang fjernet.", "success")
+    return RedirectResponse(url="/properties", status_code=302)
+
+
+@router.post("/team/{collaborator_id}/leave")
+async def leave_team(
+    collaborator_id: int,
+    request: Request,
+    db: Session = Depends(get_db),
+    user: models.User = Depends(get_current_user),
+):
+    collab = db.query(models.Collaborator).filter(
+        models.Collaborator.id == collaborator_id,
+        models.Collaborator.user_id == user.id,
+    ).first()
+    if collab:
+        db.delete(collab)
+        db.commit()
+        flash(request, "Du har forlatt kontoen.", "success")
     return RedirectResponse(url="/properties", status_code=302)
