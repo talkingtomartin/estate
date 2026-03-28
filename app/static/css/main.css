@@ -697,6 +697,28 @@ textarea { resize: vertical; }
   font-size: 0.85rem;
 }
 
+.investment-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  margin-bottom: 0.75rem;
+}
+
+.investment-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 0.85rem;
+  padding: 0.4rem 0.75rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+}
+
+.investment-desc { flex: 1; font-weight: 500; }
+.investment-date { color: var(--text-muted); white-space: nowrap; }
+.investment-amount { font-weight: 600; white-space: nowrap; margin-left: auto; }
+
 /* ── Recent transactions (homepage) ────────────────────────────────────── */
 .recent-txn-header {
   display: flex;

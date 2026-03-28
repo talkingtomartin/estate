@@ -24,7 +24,9 @@
 </div>
 
 <!-- Valuation -->
-{% if prop.purchase_price or prop.current_value or is_owner %}
+{% set total_investments = prop.investments | sum(attribute='amount') %}
+{% set cost_basis = (prop.purchase_price or 0) + total_investments %}
+{% if prop.purchase_price or prop.current_value or prop.investments or is_owner %}
 <div class="valuation-section">
   <div class="valuation-cards">
     {% if prop.purchase_price %}
@@ -33,15 +35,27 @@
       <span class="valuation-amount">{{ "{:,.0f}".format(prop.purchase_price).replace(",", " ") }} kr</span>
     </div>
     {% endif %}
+    {% if prop.investments %}
+    <div class="valuation-card">
+      <span class="valuation-label">Investeringer</span>
+      <span class="valuation-amount">+ {{ "{:,.0f}".format(total_investments).replace(",", " ") }} kr</span>
+    </div>
+    {% if prop.purchase_price %}
+    <div class="valuation-card">
+      <span class="valuation-label">Total kostpris</span>
+      <span class="valuation-amount">{{ "{:,.0f}".format(cost_basis).replace(",", " ") }} kr</span>
+    </div>
+    {% endif %}
+    {% endif %}
     {% if prop.current_value %}
     <div class="valuation-card">
       <span class="valuation-label">Antatt nåverdi</span>
       <span class="valuation-amount">{{ "{:,.0f}".format(prop.current_value).replace(",", " ") }} kr</span>
     </div>
     {% endif %}
-    {% if prop.purchase_price and prop.current_value %}
-    {% set gain = prop.current_value - prop.purchase_price %}
-    {% set gain_pct = (gain / prop.purchase_price * 100) %}
+    {% if cost_basis > 0 and prop.current_value %}
+    {% set gain = prop.current_value - cost_basis %}
+    {% set gain_pct = (gain / cost_basis * 100) %}
     <div class="valuation-card {% if gain >= 0 %}valuation-gain{% else %}valuation-loss{% endif %}">
       <span class="valuation-label">Verdiutvikling</span>
       <span class="valuation-amount">
@@ -52,9 +66,51 @@
     {% endif %}
   </div>
 
+  <!-- Investments list -->
+  {% if prop.investments %}
+  <div class="investment-list">
+    {% for inv in prop.investments %}
+    <div class="investment-item">
+      <span class="investment-desc">{{ inv.description }}</span>
+      {% if inv.date %}<span class="investment-date">{{ inv.date.strftime("%d.%m.%Y") }}</span>{% endif %}
+      <span class="investment-amount">{{ "{:,.0f}".format(inv.amount).replace(",", " ") }} kr</span>
+      {% if is_owner %}
+      <form method="post" action="/properties/{{ prop.id }}/investments/{{ inv.id }}/delete"
+            onsubmit="return confirm('Fjerne denne investeringen?')" style="margin-left:0.5rem">
+        <button type="submit" class="btn btn-icon btn-danger-icon" title="Fjern">✕</button>
+      </form>
+      {% endif %}
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
   {% if is_owner %}
   <details class="valuation-edit">
-    <summary>Rediger verdier</summary>
+    <summary>+ Legg til investering</summary>
+    <form method="post" action="/properties/{{ prop.id }}/investments" class="form valuation-form">
+      <div class="form-row">
+        <div class="form-group">
+          <label for="inv_description">Beskrivelse *</label>
+          <input type="text" id="inv_description" name="description" required
+                 placeholder="F.eks. Bad renovert" />
+        </div>
+        <div class="form-group">
+          <label for="inv_amount">Beløp (kr) *</label>
+          <input type="number" id="inv_amount" name="amount" required min="0" step="1000"
+                 placeholder="F.eks. 250000" />
+        </div>
+        <div class="form-group">
+          <label for="investment_date">Dato</label>
+          <input type="date" id="investment_date" name="investment_date" />
+        </div>
+      </div>
+      <button type="submit" class="btn btn-primary btn-sm">Lagre</button>
+    </form>
+  </details>
+
+  <details class="valuation-edit" style="margin-top:0.5rem">
+    <summary>Rediger kjøpesum / nåverdi</summary>
     <form method="post" action="/properties/{{ prop.id }}/valuation" class="form valuation-form">
       <div class="form-row">
         <div class="form-group">

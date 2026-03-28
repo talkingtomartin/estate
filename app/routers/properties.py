@@ -201,6 +201,59 @@ async def delete_property(
     return RedirectResponse(url="/properties", status_code=302)
 
 
+@router.post("/{property_id}/investments")
+async def add_investment(
+    property_id: int,
+    request: Request,
+    description: str = Form(...),
+    amount: float = Form(...),
+    investment_date: str = Form(""),
+    db: Session = Depends(get_db),
+    user: models.User = Depends(get_current_user),
+):
+    prop = db.query(models.Property).filter(
+        models.Property.id == property_id,
+        models.Property.user_id == user.id,
+    ).first()
+    if prop:
+        from datetime import date as date_type
+        inv = models.PropertyInvestment(
+            property_id=property_id,
+            description=description.strip(),
+            amount=abs(amount),
+            date=date_type.fromisoformat(investment_date) if investment_date.strip() else None,
+        )
+        db.add(inv)
+        db.commit()
+        flash(request, "Investering lagt til.", "success")
+    return RedirectResponse(url=f"/properties/{property_id}", status_code=302)
+
+
+@router.post("/{property_id}/investments/{investment_id}/delete")
+async def delete_investment(
+    property_id: int,
+    investment_id: int,
+    request: Request,
+    db: Session = Depends(get_db),
+    user: models.User = Depends(get_current_user),
+):
+    inv = (
+        db.query(models.PropertyInvestment)
+        .join(models.Property)
+        .filter(
+            models.PropertyInvestment.id == investment_id,
+            models.Property.id == property_id,
+            models.Property.user_id == user.id,
+        )
+        .first()
+    )
+    if inv:
+        db.delete(inv)
+        db.commit()
+        flash(request, "Investering fjernet.", "success")
+    return RedirectResponse(url=f"/properties/{property_id}", status_code=302)
+
+
 @router.post("/{property_id}/valuation")
 async def update_valuation(
     property_id: int,

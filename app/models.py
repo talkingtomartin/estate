@@ -1,7 +1,7 @@
 from datetime import datetime
 from sqlalchemy import (
     Column, Integer, String, Float, Boolean, Date, DateTime,
-    ForeignKey, Text, UniqueConstraint
+    ForeignKey, Text, UniqueConstraint, func
 )
 
 from sqlalchemy.orm import relationship
@@ -35,6 +35,7 @@ class Property(Base):
 
     user = relationship("User", back_populates="properties")
     transactions = relationship("Transaction", back_populates="property", cascade="all, delete-orphan")
+    investments = relationship("PropertyInvestment", back_populates="property", cascade="all, delete-orphan", order_by="PropertyInvestment.date")
 
 
 class Transaction(Base):
@@ -65,6 +66,20 @@ class Attachment(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
 
     transaction = relationship("Transaction", back_populates="attachments")
+
+
+class PropertyInvestment(Base):
+    """A capital investment in a property (renovation, extension, etc.)."""
+    __tablename__ = "property_investments"
+
+    id = Column(Integer, primary_key=True, index=True)
+    property_id = Column(Integer, ForeignKey("properties.id"), nullable=False)
+    description = Column(String, nullable=False)
+    amount = Column(Float, nullable=False)
+    date = Column(Date, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    property = relationship("Property", back_populates="investments")
 
 
 class Collaborator(Base):
