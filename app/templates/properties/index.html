@@ -3,7 +3,12 @@
 {% block content %}
 <div class="page-header">
   <h1>Mine eiendommer</h1>
-  <a href="/properties/new" class="btn btn-primary">+ Legg til eiendom</a>
+  <div class="page-header-actions">
+    {% if properties %}
+    <a href="/transactions/new?type=expense" class="btn btn-expense">+ Legg til utgift</a>
+    {% endif %}
+    <a href="/properties/new" class="btn btn-primary">+ Legg til eiendom</a>
+  </div>
 </div>
 
 {% if properties %}

@@ -133,6 +133,80 @@ async def all_transactions(
     })
 
 
+# ── Quick expense / income (property chosen in form) ────────────────────────
+
+@router.get("/transactions/new")
+async def quick_transaction_page(
+    request: Request,
+    type: str = "expense",
+    db: Session = Depends(get_db),
+    user: models.User = Depends(get_current_user),
+):
+    from app.routers.properties import _accessible_owner_ids
+    owner_ids = _accessible_owner_ids(db, user.id)
+    properties = (
+        db.query(models.Property)
+        .filter(models.Property.user_id.in_(owner_ids))
+        .order_by(models.Property.name)
+        .all()
+    )
+    return templates.TemplateResponse(request, "transactions/quick.html", {
+        "user": user,
+        "properties": properties,
+        "default_type": type,
+        "today": date.today().isoformat(),
+        "income_categories": INCOME_CATEGORIES,
+        "expense_categories": EXPENSE_CATEGORIES,
+        "flash_messages": get_flashes(request),
+    })
+
+
+@router.post("/transactions/new")
+async def quick_create_transaction(
+    request: Request,
+    property_id: int = Form(...),
+    type: str = Form(...),
+    description: str = Form(...),
+    amount: float = Form(...),
+    transaction_date: str = Form(...),
+    category: str = Form(""),
+    is_recurring: str = Form("off"),
+    notes: str = Form(""),
+    attachment: UploadFile = File(None),
+    db: Session = Depends(get_db),
+    user: models.User = Depends(get_current_user),
+):
+    prop = _get_property(db, property_id, user.id)
+    if not prop:
+        flash(request, "Eiendommen ble ikke funnet.", "error")
+        return RedirectResponse(url="/transactions/new", status_code=302)
+
+    txn = models.Transaction(
+        property_id=property_id,
+        type=type,
+        description=description.strip(),
+        amount=abs(amount),
+        date=date.fromisoformat(transaction_date),
+        category=category or None,
+        is_recurring=(is_recurring == "on"),
+        notes=notes.strip() or None,
+    )
+    db.add(txn)
+    db.flush()
+
+    file_path, filename = _save_attachment(attachment)
+    if file_path:
+        db.add(models.Attachment(transaction_id=txn.id, file_path=file_path, filename=filename))
+
+    db.commit()
+    txn_date = date.fromisoformat(transaction_date)
+    flash(request, "Transaksjon lagt til.", "success")
+    return RedirectResponse(
+        url=f"/properties/{property_id}?year={txn_date.year}&month={txn_date.month}",
+        status_code=302,
+    )
+
+
 # ── New transaction ──────────────────────────────────────────────────────────
 
 @router.get("/properties/{property_id}/transactions/new")
