@@ -1,4 +1,5 @@
 import os
+import jinja2
 from fastapi import FastAPI, Request, HTTPException
 from fastapi.responses import RedirectResponse
 from fastapi.staticfiles import StaticFiles
@@ -17,8 +18,17 @@ app = FastAPI(title="EstateExpenses")
 app.add_middleware(SessionMiddleware, secret_key=SECRET_KEY, max_age=86400 * 30)
 
 app.mount("/static", StaticFiles(directory=os.path.join(BASE_DIR, "app", "static")), name="static")
-templates = Jinja2Templates(directory=os.path.join(BASE_DIR, "app", "templates"))
-templates.env.filters["media_url"] = media_url
+
+# Build Jinja2 environment manually with cache disabled.
+# Vercel bundles a Jinja2 version that includes env.globals (built-ins like range/dict)
+# in the cache key as a plain dict, which is unhashable and causes a crash.
+_jinja_env = jinja2.Environment(
+    loader=jinja2.FileSystemLoader(os.path.join(BASE_DIR, "app", "templates")),
+    autoescape=jinja2.select_autoescape(["html", "xml"]),
+    cache_size=0,  # disable cache to avoid the unhashable-dict bug
+)
+_jinja_env.filters["media_url"] = media_url
+templates = Jinja2Templates(env=_jinja_env)
 
 
 app.include_router(auth.router)
