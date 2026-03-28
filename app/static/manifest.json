@@ -1,0 +1,26 @@
+{
+  "name": "Yields",
+  "short_name": "Yields",
+  "description": "Datadrevet oversikt over eiendomsøkonomien din",
+  "start_url": "/properties",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#1a365d",
+  "theme_color": "#1a365d",
+  "lang": "nb",
+  "icons": [
+    {
+      "src": "/static/icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/static/icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    }
+  ]
+}

@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Background with rounded corners -->
+  <rect width="512" height="512" rx="96" fill="#1a365d"/>
+  <!-- House shape -->
+  <path d="M256 110 L420 255 L385 255 L385 400 L305 400 L305 300 L207 300 L207 400 L127 400 L127 255 L92 255 Z" fill="white"/>
+  <!-- Door -->
+  <rect x="220" y="310" width="72" height="90" rx="6" fill="#1a365d"/>
+  <!-- Window left -->
+  <rect x="145" y="275" width="45" height="40" rx="4" fill="#3182ce"/>
+  <!-- Window right -->
+  <rect x="322" y="275" width="45" height="40" rx="4" fill="#3182ce"/>
+</svg>
