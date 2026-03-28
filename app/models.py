@@ -29,6 +29,8 @@ class Property(Base):
     name = Column(String, nullable=False)
     address = Column(String, nullable=True)
     image_path = Column(String, nullable=True)
+    purchase_price = Column(Float, nullable=True)
+    current_value = Column(Float, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
 
     user = relationship("User", back_populates="properties")

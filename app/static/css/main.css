@@ -615,6 +615,88 @@ textarea { resize: vertical; }
 
 .property-shared { font-size: 0.78rem; color: #2b6cb0; margin-top: 0.2rem; }
 
+/* ── Property valuation ─────────────────────────────────────────────────── */
+.valuation-section {
+  margin-bottom: 1.5rem;
+}
+
+.valuation-cards {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.valuation-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  padding: 0.75rem 1.1rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  min-width: 160px;
+}
+
+.valuation-card.valuation-gain {
+  background: var(--success-bg);
+  border-color: var(--success-border);
+}
+
+.valuation-card.valuation-loss {
+  background: var(--danger-bg);
+  border-color: #feb2b2;
+}
+
+.valuation-label {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+.valuation-amount {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.valuation-gain .valuation-amount { color: var(--success); }
+.valuation-loss .valuation-amount { color: var(--danger); }
+
+.valuation-pct {
+  font-size: 0.8rem;
+  font-weight: 400;
+}
+
+.valuation-edit {
+  font-size: 0.875rem;
+}
+
+.valuation-edit summary {
+  cursor: pointer;
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  user-select: none;
+  width: fit-content;
+}
+
+.valuation-edit summary:hover { color: var(--accent); }
+
+.valuation-form {
+  margin-top: 0.75rem;
+  padding: 1rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+.btn-sm {
+  padding: 0.35rem 0.9rem;
+  font-size: 0.85rem;
+}
+
 /* ── Recent transactions (homepage) ────────────────────────────────────── */
 .recent-txn-header {
   display: flex;

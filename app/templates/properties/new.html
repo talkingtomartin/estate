@@ -16,6 +16,18 @@
       <label for="address">Adresse</label>
       <input type="text" id="address" name="address" placeholder="Storgata 1, 0123 Oslo" />
     </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label for="purchase_price">Kjøpesum (kr)</label>
+        <input type="number" id="purchase_price" name="purchase_price" min="0" step="1000"
+               placeholder="F.eks. 3500000" />
+      </div>
+      <div class="form-group">
+        <label for="current_value">Antatt nåverdi (kr)</label>
+        <input type="number" id="current_value" name="current_value" min="0" step="1000"
+               placeholder="F.eks. 4200000" />
+      </div>
+    </div>
     <div class="form-group">
       <label for="image">Bilde av eiendommen</label>
       <div class="file-upload-area" id="imageUploadArea">

@@ -90,6 +90,8 @@ async def create_property(
     request: Request,
     name: str = Form(...),
     address: str = Form(""),
+    purchase_price: str = Form(""),
+    current_value: str = Form(""),
     image: UploadFile = File(None),
     db: Session = Depends(get_db),
     user: models.User = Depends(get_current_user),
@@ -100,6 +102,8 @@ async def create_property(
         name=name.strip(),
         address=address.strip() or None,
         image_path=image_path,
+        purchase_price=float(purchase_price) if purchase_price.strip() else None,
+        current_value=float(current_value) if current_value.strip() else None,
     )
     db.add(prop)
     db.commit()
@@ -195,6 +199,27 @@ async def delete_property(
         db.commit()
         flash(request, f'Eiendommen "{prop.name}" ble slettet.', "success")
     return RedirectResponse(url="/properties", status_code=302)
+
+
+@router.post("/{property_id}/valuation")
+async def update_valuation(
+    property_id: int,
+    request: Request,
+    purchase_price: str = Form(""),
+    current_value: str = Form(""),
+    db: Session = Depends(get_db),
+    user: models.User = Depends(get_current_user),
+):
+    prop = db.query(models.Property).filter(
+        models.Property.id == property_id,
+        models.Property.user_id == user.id,
+    ).first()
+    if prop:
+        prop.purchase_price = float(purchase_price) if purchase_price.strip() else None
+        prop.current_value = float(current_value) if current_value.strip() else None
+        db.commit()
+        flash(request, "Verdier oppdatert.", "success")
+    return RedirectResponse(url=f"/properties/{property_id}", status_code=302)
 
 
 # ── Account-level collaboration ──────────────────────────────────────────────
