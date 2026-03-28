@@ -1,3 +1,53 @@
+// ── Navbar: hamburger toggle + active link ───────────────────────────────
+(function () {
+  const navbar   = document.getElementById('navbar');
+  const toggle   = document.getElementById('navToggle');
+  const links    = document.getElementById('navLinks');
+  const backdrop = document.getElementById('navBackdrop');
+
+  function openMenu() {
+    navbar.classList.add('open');
+    links.classList.add('open');
+    backdrop.classList.remove('hidden');
+    toggle.setAttribute('aria-expanded', 'true');
+  }
+
+  function closeMenu() {
+    navbar.classList.remove('open');
+    links.classList.remove('open');
+    backdrop.classList.add('hidden');
+    toggle.setAttribute('aria-expanded', 'false');
+  }
+
+  if (toggle) {
+    toggle.addEventListener('click', function () {
+      navbar.classList.contains('open') ? closeMenu() : openMenu();
+    });
+  }
+
+  if (backdrop) backdrop.addEventListener('click', closeMenu);
+
+  // Close on nav-link click (mobile)
+  if (links) {
+    links.querySelectorAll('.nav-link').forEach(function (a) {
+      a.addEventListener('click', closeMenu);
+    });
+  }
+
+  // Mark active link
+  const path = window.location.pathname;
+  if (links) {
+    links.querySelectorAll('.nav-link').forEach(function (a) {
+      const href = a.getAttribute('href');
+      if (href && href !== '#' && path.startsWith(href) && href !== '/') {
+        a.classList.add('active');
+      } else if (href === '/properties' && path === '/properties') {
+        a.classList.add('active');
+      }
+    });
+  }
+})();
+
 // Switch category options and recurring label when type changes
 function switchType(type) {
   const incomeOpts = document.getElementById('income-options');

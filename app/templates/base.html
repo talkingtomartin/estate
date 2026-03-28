@@ -9,16 +9,22 @@
 </head>
 <body>
   {% if user %}
-  <nav class="navbar">
+  <nav class="navbar" id="navbar">
     <a href="/properties" class="nav-brand">🏠 Yields</a>
-    <div class="nav-links">
-      <a href="/properties" class="nav-link">Mine eiendommer</a>
-      <a href="/transactions/all" class="nav-link">Transaksjoner</a>
-      <a href="/verdiutvikling" class="nav-link">Verdiutvikling</a>
-      <a href="/profile" class="nav-link">Min side</a>
-      <a href="/auth/logout" class="btn btn-outline-sm">Logg ut</a>
+    <button class="nav-toggle" id="navToggle" aria-label="Meny" aria-expanded="false">
+      <span class="nav-toggle-bar"></span>
+      <span class="nav-toggle-bar"></span>
+      <span class="nav-toggle-bar"></span>
+    </button>
+    <div class="nav-links" id="navLinks">
+      <a href="/properties" class="nav-link">🏠 Mine eiendommer</a>
+      <a href="/transactions/all" class="nav-link">📋 Transaksjoner</a>
+      <a href="/verdiutvikling" class="nav-link">📈 Verdiutvikling</a>
+      <a href="/profile" class="nav-link">👤 Min side</a>
+      <a href="/auth/logout" class="nav-link nav-link-logout">Logg ut</a>
     </div>
   </nav>
+  <div class="nav-backdrop hidden" id="navBackdrop"></div>
   {% endif %}
 
   <main class="main-content {% if not user %}main-centered{% endif %}">
