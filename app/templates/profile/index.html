@@ -72,7 +72,26 @@
       <input type="email" name="email" placeholder="Inviter via e-postadresse..." required />
       <button type="submit" class="btn btn-primary">Inviter</button>
     </form>
-    <p class="collab-hint">Personen må være registrert i Yields. De vil se alle dine eiendommer.</p>
+    <p class="collab-hint">Personen trenger ikke være registrert ennå. De vil se alle dine eiendommer.</p>
+
+    {% if pending_invites %}
+    <div style="margin-top:1rem;padding-top:1rem;border-top:1px solid var(--border)">
+      <p class="collab-label">Venter på registrering:</p>
+      <div class="collab-list">
+        {% for inv in pending_invites %}
+        <div class="collab-item">
+          <span class="collab-name">{{ inv.email }}</span>
+          <span class="collab-email">Ikke registrert ennå</span>
+          <form method="post" action="/properties/team/invite/{{ inv.id }}/cancel"
+                onsubmit="return confirm('Avbryte invitasjonen til {{ inv.email }}?')"
+                style="margin-left:auto">
+            <button type="submit" class="btn btn-icon btn-danger-icon" title="Avbryt">✕</button>
+          </form>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
 
     {% if my_memberships %}
     <div style="margin-top:1.25rem;padding-top:1rem;border-top:1px solid var(--border)">

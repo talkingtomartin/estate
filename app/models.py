@@ -94,3 +94,16 @@ class Collaborator(Base):
 
     owner = relationship("User", foreign_keys=[owner_id])
     user = relationship("User", foreign_keys=[user_id])
+
+
+class PendingInvite(Base):
+    """Invite sent to an email address not yet registered in the system."""
+    __tablename__ = "pending_invites"
+    __table_args__ = (UniqueConstraint("owner_id", "email"),)
+
+    id = Column(Integer, primary_key=True, index=True)
+    owner_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    email = Column(String, nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    owner = relationship("User", foreign_keys=[owner_id])

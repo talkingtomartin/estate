@@ -26,10 +26,16 @@ async def profile_page(
         .filter(models.Collaborator.user_id == user.id)
         .all()
     )
+    pending_invites = (
+        db.query(models.PendingInvite)
+        .filter(models.PendingInvite.owner_id == user.id)
+        .all()
+    )
     return templates.TemplateResponse(request, "profile/index.html", {
         "user": user,
         "my_collaborators": my_collaborators,
         "my_memberships": my_memberships,
+        "pending_invites": pending_invites,
         "flash_messages": get_flashes(request),
     })
 

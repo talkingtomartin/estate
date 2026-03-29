@@ -17,6 +17,23 @@ from app.security import (
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
+
+def _activate_pending_invites(db: Session, user: models.User) -> None:
+    """Convert any pending invites for this email into active collaborators."""
+    invites = db.query(models.PendingInvite).filter(
+        models.PendingInvite.email == user.email
+    ).all()
+    for invite in invites:
+        existing = db.query(models.Collaborator).filter(
+            models.Collaborator.owner_id == invite.owner_id,
+            models.Collaborator.user_id == user.id,
+        ).first()
+        if not existing:
+            db.add(models.Collaborator(owner_id=invite.owner_id, user_id=user.id))
+        db.delete(invite)
+    if invites:
+        db.commit()
+
 GOOGLE_AUTH_URL = "https://accounts.google.com/o/oauth2/auth"
 GOOGLE_TOKEN_URL = "https://oauth2.googleapis.com/token"
 GOOGLE_USERINFO_URL = "https://www.googleapis.com/oauth2/v2/userinfo"
@@ -83,6 +100,8 @@ async def register(
     db.add(user)
     db.commit()
     db.refresh(user)
+
+    _activate_pending_invites(db, user)
 
     token = create_access_token(user.id)
     response = RedirectResponse(url="/properties", status_code=302)
@@ -171,6 +190,8 @@ async def google_callback(
             db.add(user)
     db.commit()
     db.refresh(user)
+
+    _activate_pending_invites(db, user)
 
     token = create_access_token(user.id)
     response = RedirectResponse(url="/properties", status_code=302)

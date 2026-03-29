@@ -284,26 +284,69 @@ async def invite_collaborator(
     db: Session = Depends(get_db),
     user: models.User = Depends(get_current_user),
 ):
-    invitee = db.query(models.User).filter(models.User.email == email.lower()).first()
-    if not invitee:
-        flash(request, f'Ingen bruker med e-post «{email}» er registrert.', "error")
-        return RedirectResponse(url="/profile", status_code=302)
+    email = email.lower().strip()
 
-    if invitee.id == user.id:
+    if email == user.email:
         flash(request, "Du kan ikke invitere deg selv.", "error")
         return RedirectResponse(url="/profile", status_code=302)
 
-    existing = db.query(models.Collaborator).filter(
-        models.Collaborator.owner_id == user.id,
-        models.Collaborator.user_id == invitee.id,
-    ).first()
-    if existing:
-        flash(request, f'{invitee.name or invitee.email} har allerede tilgang.', "error")
+    invitee = db.query(models.User).filter(models.User.email == email).first()
+
+    if invitee:
+        # User already registered → create Collaborator directly
+        existing = db.query(models.Collaborator).filter(
+            models.Collaborator.owner_id == user.id,
+            models.Collaborator.user_id == invitee.id,
+        ).first()
+        if existing:
+            flash(request, f'{invitee.name or invitee.email} har allerede tilgang.', "error")
+            return RedirectResponse(url="/profile", status_code=302)
+        db.add(models.Collaborator(owner_id=user.id, user_id=invitee.id))
+        db.commit()
+        flash(request, f'{invitee.name or invitee.email} kan nå se alle dine eiendommer.', "success")
         return RedirectResponse(url="/profile", status_code=302)
 
-    db.add(models.Collaborator(owner_id=user.id, user_id=invitee.id))
+    # User not registered → create PendingInvite and send email
+    existing_invite = db.query(models.PendingInvite).filter(
+        models.PendingInvite.owner_id == user.id,
+        models.PendingInvite.email == email,
+    ).first()
+    if existing_invite:
+        flash(request, f'En invitasjon er allerede sendt til {email}.', "error")
+        return RedirectResponse(url="/profile", status_code=302)
+
+    db.add(models.PendingInvite(owner_id=user.id, email=email))
     db.commit()
-    flash(request, f'{invitee.name or invitee.email} kan nå se alle dine eiendommer.', "success")
+
+    from app.email import send_invite_email
+    base = str(request.base_url).rstrip("/")
+    from urllib.parse import quote
+    register_url = f"{base}/auth/register?email={quote(email)}"
+    inviter_name = user.name or user.email
+    sent = send_invite_email(email, inviter_name, register_url)
+
+    if sent:
+        flash(request, f'Invitasjon sendt til {email} på e-post.', "success")
+    else:
+        flash(request, f'Invitasjon registrert for {email}. Send dem denne lenken: {register_url}', "info")
+    return RedirectResponse(url="/profile", status_code=302)
+
+
+@router.post("/team/invite/{invite_id}/cancel")
+async def cancel_invite(
+    invite_id: int,
+    request: Request,
+    db: Session = Depends(get_db),
+    user: models.User = Depends(get_current_user),
+):
+    invite = db.query(models.PendingInvite).filter(
+        models.PendingInvite.id == invite_id,
+        models.PendingInvite.owner_id == user.id,
+    ).first()
+    if invite:
+        db.delete(invite)
+        db.commit()
+        flash(request, "Invitasjon avbrutt.", "success")
     return RedirectResponse(url="/profile", status_code=302)
 
 

@@ -13,7 +13,7 @@
     </div>
     <div class="form-group">
       <label for="email">E-post</label>
-      <input type="email" id="email" name="email" required autocomplete="email" placeholder="din@epost.no" />
+      <input type="email" id="email" name="email" required autocomplete="email" placeholder="din@epost.no" value="{{ request.query_params.get('email', '') }}" />
     </div>
     <div class="form-group">
       <label for="password">Passord <span class="hint">(min. 8 tegn)</span></label>
