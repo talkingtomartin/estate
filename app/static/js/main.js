@@ -193,3 +193,39 @@ function parseReceipt(file, previewEl) {
     });
 }
 
+// ── Tab switching ──────────────────────────────────────────────────────────
+(function () {
+  const tabBtns = document.querySelectorAll('.tab-btn');
+  const tabContents = document.querySelectorAll('.tab-content');
+
+  if (tabBtns.length === 0) return; // No tabs on this page
+
+  // Initialize: show first tab by default
+  if (tabContents.length > 0) {
+    tabContents[0].classList.add('active');
+  }
+
+  // Add click handlers to each button
+  tabBtns.forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      const tabId = this.getAttribute('data-tab');
+
+      // Remove active class from all buttons and contents
+      tabBtns.forEach(function (b) { b.classList.remove('active'); });
+      tabContents.forEach(function (c) { c.classList.remove('active'); });
+
+      // Add active class to clicked button and corresponding content
+      btn.classList.add('active');
+      const activeTab = document.getElementById(tabId);
+      if (activeTab) {
+        activeTab.classList.add('active');
+      }
+    });
+  });
+
+  // Mark first tab button as active
+  if (tabBtns.length > 0) {
+    tabBtns[0].classList.add('active');
+  }
+})();
+
