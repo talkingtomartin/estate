@@ -47,6 +47,14 @@
   </section>
   {% endif %}
 
+  <!-- Admin -->
+  {% if user.email == "talkingtomartin@hotmail.com" %}
+  <section class="card">
+    <h2 class="card-title">🔧 Admin</h2>
+    <p><a href="/admin/users" class="btn btn-primary">Se registrerte brukere</a></p>
+  </section>
+  {% endif %}
+
   <!-- Samarbeidspartnere -->
   <section class="card card-full">
     <h2 class="card-title">👥 Samarbeidspartnere</h2>
