@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block title %}Admin – Brukere{% endblock %}
+{% block content %}
+<div class="page-header">
+  <h1>Registrerte brukere</h1>
+</div>
+
+<section class="card">
+  <table class="table">
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>E-post</th>
+        <th>Navn</th>
+        <th>Registrert</th>
+        <th>Innloggingsmetode</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for user in users %}
+      <tr>
+        <td>{{ user.id }}</td>
+        <td>{{ user.email }}</td>
+        <td>{{ user.name or "–" }}</td>
+        <td>{{ user.created_at.strftime("%d. %B %Y") if user.created_at else "–" }}</td>
+        <td>{% if user.google_id %}Google{% else %}E-post og passord{% endif %}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</section>
+{% endblock %}

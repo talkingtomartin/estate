@@ -28,6 +28,9 @@
       <a href="/transactions/all" class="nav-link">📋 Transaksjoner</a>
       <a href="/verdiutvikling" class="nav-link">📈 Verdiutvikling</a>
       <a href="/profile" class="nav-link">👤 Min side</a>
+      {% if user.email == "talkingtomartin@hotmail.com" %}
+      <a href="/admin/users" class="nav-link">🔧 Admin</a>
+      {% endif %}
       <a href="/auth/logout" class="nav-link nav-link-logout">Logg ut</a>
     </div>
   </nav>

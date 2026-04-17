@@ -6,7 +6,7 @@ from fastapi.templating import Jinja2Templates
 from starlette.middleware.sessions import SessionMiddleware
 
 from app.config import SECRET_KEY, UPLOAD_DIR
-from app.routers import auth, properties, transactions, profile, valuation
+from app.routers import auth, properties, transactions, profile, valuation, admin
 from app.storage import media_url
 
 # Absolute path to project root (works both locally and on Vercel)
@@ -31,6 +31,7 @@ app.include_router(properties.router)
 app.include_router(transactions.router)
 app.include_router(profile.router)
 app.include_router(valuation.router)
+app.include_router(admin.router)
 
 
 @app.on_event("startup")
